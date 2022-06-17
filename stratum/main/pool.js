@@ -98,8 +98,8 @@ const Pool = function(config, configMain, responseFn) {
   // Check if Auxiliary Share is a Valid Block Candidate
   this.checkAuxiliary = function(shareData) {
     if (_this.auxiliary.enabled) {
-      const shareMultiplier = Algorithms.sha256d.multiplier;
-      const shareDiff = Algorithms.sha256d.diff / Number(_this.auxiliary.rpcData.target);
+      const shareMultiplier = Algorithms.ghostrider.multiplier;
+      const shareDiff = Algorithms.ghostrider.diff / Number(_this.auxiliary.rpcData.target);
       shareData.blockDiffAuxiliary = shareDiff * shareMultiplier;
       return _this.auxiliary.rpcData.target >= shareData.headerDiff;
     }
@@ -345,7 +345,7 @@ const Pool = function(config, configMain, responseFn) {
       // Initialize Statistics/Settings
       _this.settings.testnet = (resultData.getblockchaininfo.chain === 'test') ? true : false;
       _this.statistics.connections = resultData.getnetworkinfo.connections;
-      _this.statistics.difficulty = difficulty * Algorithms.sha256d.multiplier;
+      _this.statistics.difficulty = difficulty * Algorithms.ghostrider.multiplier;
       _this.config.settings.testnet = _this.settings.testnet;
 
       callback();
@@ -568,9 +568,6 @@ const Pool = function(config, configMain, responseFn) {
         extraNonce2: message.params[2],
         nTime: message.params[3],
         nonce: message.params[4],
-        versionBit: message.params[5],
-        versionMask: client.versionMask,
-        asicboost: client.asicboost,
       };
 
       // Submit Share to Job Manager

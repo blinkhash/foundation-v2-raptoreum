@@ -64,7 +64,7 @@ const Stratum = function (logger, config, configMain) {
       _this.text.startingMessageText4(_this.stratum.statistics.ports.join(', ')),
       _this.text.startingMessageText5(_this.stratum.statistics.feePercentage * 100),
       _this.text.startingMessageText6(_this.stratum.manager.currentJob.rpcData.height),
-      _this.text.startingMessageText7(_this.stratum.manager.currentJob.difficulty * Algorithms.sha256d.multiplier),
+      _this.text.startingMessageText7(_this.stratum.manager.currentJob.difficulty * Algorithms.ghostrider.multiplier),
       _this.text.startingMessageText8(_this.stratum.statistics.difficulty),
       _this.text.startingMessageText9(_this.stratum.statistics.connections),
       _this.text.startingMessageText10()];

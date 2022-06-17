@@ -68,8 +68,8 @@ const Loader = function(logger, configMain) {
   this.handleConfigs = function() {
     let config = null;
     const normalizedPath = path.join(__dirname, '../../configs/');
-    if (fs.existsSync(normalizedPath + 'bitcoin.js')) {
-      config = require(normalizedPath + 'bitcoin.js');
+    if (fs.existsSync(normalizedPath + 'raptoreum.js')) {
+      config = require(normalizedPath + 'raptoreum.js');
 
       // Validate Individual Configuration Files
       if (!config.enabled) return;
@@ -79,7 +79,7 @@ const Loader = function(logger, configMain) {
 
     // No Configuration Created
     } else {
-      throw new Error('Unable to find bitcoin.js file. Read the installation/setup instructions');
+      throw new Error('Unable to find raptoreum.js file. Read the installation/setup instructions');
     }
 
     // Return Validated Configuration

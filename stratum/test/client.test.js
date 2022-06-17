@@ -246,31 +246,23 @@ describe('Test client functionality', () => {
     const socket = mockSocket();
     const client = new Client(configCopy, socket, 0, () => {});
     client.socket.on('log', (text) => {
-      expect(text).toStrictEqual('{"id":null,"result":{"version-rolling":true,"version-rolling.mask":"1fffe000"},"error":null}\n');
+      expect(text).toStrictEqual('{"id":null,"result":{"version-rolling":false},"error":null}\n');
       done();
     });
     client.validateMessages({ id: null, method: 'mining.configure' });
-    expect(client.asicboost).toBe(true);
-    expect(client.versionMask).toBe('1fffe000');
+    expect(client.asicboost).toBe(false);
+    expect(client.versionMask).toBe('00000000');
   });
 
   test('Test client message validation [7]', () => {
     const socket = mockSocket();
     const client = new Client(configCopy, socket, 0, () => {});
-    client.validateMessages({ id: null, method: 'mining.multi_version', params: [1] });
+    client.validateMessages({ id: null, method: 'mining.multi_version', params: [4] });
     expect(client.asicboost).toBe(false);
     expect(client.versionMask).toBe('00000000');
   });
 
-  test('Test client message validation [8]', () => {
-    const socket = mockSocket();
-    const client = new Client(configCopy, socket, 0, () => {});
-    client.validateMessages({ id: null, method: 'mining.multi_version', params: [4] });
-    expect(client.asicboost).toBe(true);
-    expect(client.versionMask).toBe('1fffe000');
-  });
-
-  test('Test client message validation [9]', (done) => {
+  test('Test client message validation [8]', (done) => {
     const socket = mockSocket();
     const client = new Client(configCopy, socket, 0, () => {});
     client.socket.on('log', (text) => {
@@ -281,7 +273,7 @@ describe('Test client functionality', () => {
     expect(client.shares.invalid).toBe(1);
   });
 
-  test('Test client message validation [10]', (done) => {
+  test('Test client message validation [9]', (done) => {
     const socket = mockSocket();
     const client = new Client(configCopy, socket, 0, () => {});
     client.authorized = true;
@@ -293,7 +285,7 @@ describe('Test client functionality', () => {
     expect(client.shares.invalid).toBe(1);
   });
 
-  test('Test client message validation [11]', (done) => {
+  test('Test client message validation [10]', (done) => {
     const socket = mockSocket();
     const client = new Client(configCopy, socket, 0, () => {});
     client.authorized = true;
@@ -308,7 +300,7 @@ describe('Test client functionality', () => {
     expect(client.shares.valid).toBe(1);
   });
 
-  test('Test client message validation [12]', (done) => {
+  test('Test client message validation [11]', (done) => {
     const socket = mockSocket();
     const client = new Client(configCopy, socket, 0, () => {});
     client.addrPrimary = 'worker';
@@ -323,7 +315,7 @@ describe('Test client functionality', () => {
     expect(client.shares.valid).toBe(1);
   });
 
-  test('Test client message validation [13]', (done) => {
+  test('Test client message validation [12]', (done) => {
     const socket = mockSocket();
     configCopy.banning.checkThreshold = 5;
     const client = new Client(configCopy, socket, 0, () => {});
@@ -338,7 +330,7 @@ describe('Test client functionality', () => {
     client.validateMessages({ id: null, method: 'mining.submit', params: ['worker', 'password'] });
   });
 
-  test('Test client message validation [14]', (done) => {
+  test('Test client message validation [13]', (done) => {
     const socket = mockSocket();
     configCopy.banning.checkThreshold = 5;
     configCopy.banning.invalidPercent = 50;
@@ -355,7 +347,7 @@ describe('Test client functionality', () => {
     expect(client.shares.valid).toBe(0);
   });
 
-  test('Test client message validation [15]', (done) => {
+  test('Test client message validation [14]', (done) => {
     const socket = mockSocket();
     const client = new Client(configCopy, socket, 0, () => {});
     client.socket.on('log', (text) => {
@@ -365,7 +357,7 @@ describe('Test client functionality', () => {
     client.validateMessages({ id: null, method: 'mining.get_transactions' });
   });
 
-  test('Test client message validation [16]', (done) => {
+  test('Test client message validation [15]', (done) => {
     const socket = mockSocket();
     const client = new Client(configCopy, socket, 0, () => {});
     client.socket.on('log', (text) => {
@@ -375,7 +367,7 @@ describe('Test client functionality', () => {
     client.validateMessages({ id: null, method: 'mining.extranonce.subscribe' });
   });
 
-  test('Test client message validation [17]', (done) => {
+  test('Test client message validation [16]', (done) => {
     const socket = mockSocket();
     const client = new Client(configCopy, socket, 0, () => {});
     client.on('client.mining.unknown', () => done());

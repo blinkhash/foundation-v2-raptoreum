@@ -62,7 +62,7 @@ const Manager = function(config, configMain) {
     const nTimeInt = parseInt(submission.nTime, 16);
 
     // Establish Hashing Algorithms
-    const headerDigest = Algorithms.sha256d.hash();
+    const headerDigest = Algorithms.ghostrider.hash();
     const coinbaseDigest = Algorithms.sha256d.hash();
     const blockDigest = Algorithms.sha256d.hash();
 
@@ -104,19 +104,9 @@ const Manager = function(config, configMain) {
       return shareError([22, 'duplicate share']);
     }
 
-    // Check for AsicBoost Support
-    let version = job.rpcData.version;
-    if (submission.asicboost && submission.versionBit !== undefined) {
-      const vBit = parseInt('0x' + submission.versionBit);
-      const vMask = parseInt('0x' + submission.versionMask);
-      if ((vBit & ~vMask) !== 0) {
-        return shareError([20, 'invalid version bit']);
-      }
-      version = (version & ~vMask) | (vBit & vMask);
-    }
-
     // Establish Share Information
     let blockValid = false;
+    const version = job.rpcData.version;
     const extraNonce1Buffer = Buffer.from(submission.extraNonce1, 'hex');
     const extraNonce2Buffer = Buffer.from(submission.extraNonce2, 'hex');
 
@@ -133,9 +123,9 @@ const Manager = function(config, configMain) {
     const headerBigInt = utils.bufferToBigInt(utils.reverseBuffer(headerHash));
 
     // Calculate Share Difficulty
-    const shareMultiplier = Algorithms.sha256d.multiplier;
-    const shareDiff = Algorithms.sha256d.diff / Number(headerBigInt) * shareMultiplier;
-    const blockDiffAdjusted = job.difficulty * Algorithms.sha256d.multiplier;
+    const shareMultiplier = Algorithms.ghostrider.multiplier;
+    const shareDiff = Algorithms.ghostrider.diff / Number(headerBigInt) * shareMultiplier;
+    const blockDiffAdjusted = job.difficulty * Algorithms.ghostrider.multiplier;
     const blockHash = utils.reverseBuffer(blockDigest(headerBuffer, submission.nTime)).toString('hex');
     const blockHex = job.handleBlocks(headerBuffer, coinbaseBuffer).toString('hex');
 

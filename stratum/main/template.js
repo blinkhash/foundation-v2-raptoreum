@@ -15,7 +15,7 @@ const Template = function(jobId, config, rpcData, placeholder) {
 
   // Template Variables
   this.target = _this.rpcData.target ? BigInt(`0x${ _this.rpcData.target }`) : utils.bigIntFromBitsHex(_this.rpcData.bits);
-  this.difficulty = parseFloat((Algorithms.sha256d.diff / Number(_this.target)).toFixed(9));
+  this.difficulty = parseFloat((Algorithms.ghostrider.diff / Number(_this.target)).toFixed(9));
   this.previous = utils.reverseByteOrder(Buffer.from(_this.rpcData.previousblockhash, 'hex')).toString('hex');
   this.generation = new Transactions(config).handleGeneration(rpcData, placeholder);
   this.steps = utils.getMerkleSteps(_this.rpcData.transactions);

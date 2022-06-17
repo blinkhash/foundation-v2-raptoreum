@@ -60,9 +60,6 @@ describe('Test manager functionality', () => {
       extraNonce2: '00'.toString('hex'),
       nTime: 0,
       nonce: 0,
-      versionBit: '00000000',
-      versionMask: '1fffe000',
-      asicboost: true,
     };
     const response = manager.handleShare(1, 0, 0, 'ip_addr', 'port', 'addr1', 'addr2', submission);
     expect(response.error[0]).toBe(20);
@@ -77,9 +74,6 @@ describe('Test manager functionality', () => {
       extraNonce2: '00000000'.toString('hex'),
       nTime: 0,
       nonce: 0,
-      versionBit: '00000000',
-      versionMask: '1fffe000',
-      asicboost: true,
     };
     const response = manager.handleShare(0, 0, 0, 'ip_addr', 'port', 'addr1', 'addr2', submission);
     expect(response.error[0]).toBe(21);
@@ -94,9 +88,6 @@ describe('Test manager functionality', () => {
       extraNonce2: '00000000'.toString('hex'),
       nTime: '00'.toString('hex'),
       nonce: 0,
-      versionBit: '00000000',
-      versionMask: '1fffe000',
-      asicboost: true,
     };
     const response = manager.handleShare(1, 0, 0, 'ip_addr', 'port', 'addr1', 'addr2', submission);
     expect(response.error[0]).toBe(20);
@@ -111,9 +102,6 @@ describe('Test manager functionality', () => {
       extraNonce2: '00000000'.toString('hex'),
       nTime: '7036c54f'.toString('hex'),
       nonce: 0,
-      versionBit: '00000000',
-      versionMask: '1fffe000',
-      asicboost: true,
     };
     const response = manager.handleShare(1, 0, 0, 'ip_addr', 'port', 'addr1', 'addr2', submission);
     expect(response.error[0]).toBe(20);
@@ -128,9 +116,6 @@ describe('Test manager functionality', () => {
       extraNonce2: '00000000'.toString('hex'),
       nTime: '6036c54f'.toString('hex'),
       nonce: '00'.toString('hex'),
-      versionBit: '00000000',
-      versionMask: '1fffe000',
-      asicboost: true,
     };
     const response = manager.handleShare(1, 0, 0, 'ip_addr', 'port', 'addr1', 'addr2', submission);
     expect(response.error[0]).toBe(20);
@@ -145,9 +130,6 @@ describe('Test manager functionality', () => {
       extraNonce2: '00000000'.toString('hex'),
       nTime: '6036c54f'.toString('hex'),
       nonce: 'fe1a0000'.toString('hex'),
-      versionBit: '00000000',
-      versionMask: '1fffe000',
-      asicboost: true,
     };
     const response = manager.handleShare(1, 0, 0, 'ip_addr', 'port', null, null, submission);
     expect(response.error[0]).toBe(20);
@@ -162,9 +144,6 @@ describe('Test manager functionality', () => {
       extraNonce2: '00000000'.toString('hex'),
       nTime: '6036c54f'.toString('hex'),
       nonce: 'fe1a0000'.toString('hex'),
-      versionBit: '00000000',
-      versionMask: '1fffe000',
-      asicboost: true,
     };
     manager.handleShare(1, 0.0000001, 0.0000001, 'ip_addr', 'port', 'addr1', 'addr2', submission);
     const response = manager.handleShare(1, 0.0000001, 0.0000001, 'ip_addr', 'port', 'addr1', 'addr2', submission);
@@ -180,13 +159,10 @@ describe('Test manager functionality', () => {
       extraNonce2: '00000000'.toString('hex'),
       nTime: '6036c54f'.toString('hex'),
       nonce: 'fe1a0000'.toString('hex'),
-      versionBit: '20000000',
-      versionMask: '1fffe000',
-      asicboost: true,
     };
-    const response = manager.handleShare(1, 0.0000001, 0.0000001, 'ip_addr', 'port', 'addr1', 'addr2', submission);
-    expect(response.error[0]).toBe(20);
-    expect(response.error[1]).toBe('invalid version bit');
+    const response = manager.handleShare(1, 1, 1, 'ip_addr', 'port', 'addr1', 'addr2', submission);
+    expect(response.error[0]).toBe(23);
+    expect(response.error[1].slice(0, 23)).toBe('low difficulty share of');
   });
 
   test('Test share submission process [9]', () => {
@@ -197,26 +173,6 @@ describe('Test manager functionality', () => {
       extraNonce2: '00000000'.toString('hex'),
       nTime: '6036c54f'.toString('hex'),
       nonce: 'fe1a0000'.toString('hex'),
-      versionBit: '00000000',
-      versionMask: '1fffe000',
-      asicboost: true,
-    };
-    const response = manager.handleShare(1, 1, 1, 'ip_addr', 'port', 'addr1', 'addr2', submission);
-    expect(response.error[0]).toBe(23);
-    expect(response.error[1].slice(0, 23)).toBe('low difficulty share of');
-  });
-
-  test('Test share submission process [10]', () => {
-    const manager = new Manager(configCopy, configMainCopy);
-    manager.handleTemplate(rpcDataCopy, false);
-    const submission = {
-      extraNonce1: '00000001'.toString('hex'),
-      extraNonce2: '00000000'.toString('hex'),
-      nTime: '6036c54f'.toString('hex'),
-      nonce: 'fe1a0000'.toString('hex'),
-      versionBit: '00000000',
-      versionMask: '1fffe000',
-      asicboost: false,
     };
     const response = manager.handleShare(1, 1, 1, 'ip_addr', 'port', 'addr1', 'addr2', submission);
     expect(response.error[0]).toBe(23);
