@@ -135,6 +135,7 @@ const Transactions = function(config) {
     // Handle Founder Transactions
     if (rpcData.founder_payments_started && rpcData.founder) {
       const founderReward = rpcData.founder.amount;
+      let founderScript;
       if (rpcData.founder.script) founderScript = Buffer.from(rpcData.founder.script, 'hex');
       else founderScript = utils.addressToScript(rpcData.founder.payee, network);
       reward -= founderReward;
