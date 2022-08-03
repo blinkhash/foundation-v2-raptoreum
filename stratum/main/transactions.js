@@ -3,10 +3,11 @@ const utils = require('./utils');
 ////////////////////////////////////////////////////////////////////////////////
 
 // Main Transactions Function
-const Transactions = function(config) {
+const Transactions = function(config, rpcData) {
 
   const _this = this;
   this.config = config;
+  this.rpcData = rpcData;
 
   // Mainnet Configuration
   this.configMainnet = {
@@ -37,7 +38,7 @@ const Transactions = function(config) {
   };
 
   // Calculate Generation Transaction
-  this.handleGeneration = function(rpcData, placeholder) {
+  this.handleGeneration = function(placeholder) {
 
     const txLockTime = 0;
     const txInSequence = 0;
@@ -52,39 +53,40 @@ const Transactions = function(config) {
       _this.configTestnet;
 
     // Use Version Found in CoinbaseTxn
-    if (rpcData.coinbasetxn && rpcData.coinbasetxn.data) {
-      txVersion = parseInt(utils.reverseHex(rpcData.coinbasetxn.data.slice(0, 8)), 16);
+    if (_this.rpcData.coinbasetxn && _this.rpcData.coinbasetxn.data) {
+      txVersion = parseInt(utils.reverseHex(_this.rpcData.coinbasetxn.data.slice(0, 8)), 16);
     }
 
     // Support Coinbase v3 Block Template
-    if (rpcData.coinbase_payload && rpcData.coinbase_payload.length > 0) {
-      txExtraPayload = Buffer.from(rpcData.coinbase_payload, 'hex');
+    if (_this.rpcData.coinbase_payload && _this.rpcData.coinbase_payload.length > 0) {
+      txExtraPayload = Buffer.from(_this.rpcData.coinbase_payload, 'hex');
       txVersion = txVersion + (5 << 16);
     }
 
     // Calculate Coin Block Reward
-    let reward = rpcData.coinbasevalue;
+    const fees = _this.rpcData.transactions.reduce((sum, tx) => sum + tx.fee, 0);
+    let reward = _this.rpcData.coinbasevalue + fees;
 
     // Handle Pool/Coinbase Addr/Flags
     const poolAddressScript = utils.addressToScript(_this.config.primary.address, network);
-    const coinbaseAux = rpcData.coinbaseaux && rpcData.coinbaseaux.flags ?
-      Buffer.from(rpcData.coinbaseaux.flags, 'hex') :
+    const coinbaseAux = _this.rpcData.coinbaseaux && _this.rpcData.coinbaseaux.flags ?
+      Buffer.from(_this.rpcData.coinbaseaux.flags, 'hex') :
       Buffer.from([]);
 
     // Build Initial ScriptSig
     let scriptSig = Buffer.concat([
-      utils.serializeNumber(rpcData.height),
+      utils.serializeNumber(_this.rpcData.height),
       coinbaseAux,
       utils.serializeNumber(Date.now() / 1000 | 0),
       Buffer.from([placeholder.length]),
     ]);
 
     // Add Auxiliary Data to ScriptSig
-    if (_this.config.auxiliary && _this.config.auxiliary.enabled && rpcData.auxData) {
+    if (_this.config.auxiliary && _this.config.auxiliary.enabled && _this.rpcData.auxData) {
       scriptSig = Buffer.concat([
         scriptSig,
         Buffer.from(_this.config.auxiliary.coin.header, 'hex'),
-        Buffer.from(rpcData.auxData.hash, 'hex'),
+        Buffer.from(_this.rpcData.auxData.hash, 'hex'),
         utils.packUInt32LE(1),
         utils.packUInt32LE(0)
       ]);
@@ -101,8 +103,8 @@ const Transactions = function(config) {
     ]);
 
     // Handle Smartnodes
-    if (rpcData.smartnode.length > 0) {
-      rpcData.smartnode.forEach((payee) => {
+    if (_this.rpcData.smartnode.length > 0) {
+      _this.rpcData.smartnode.forEach((payee) => {
         const payeeReward = payee.amount;
         let payeeScript;
         if (payee.script) payeeScript = Buffer.from(payee.script, 'hex');
@@ -117,8 +119,8 @@ const Transactions = function(config) {
     }
 
     // Handle Superblocks
-    if (rpcData.superblock.length > 0) {
-      rpcData.superblock.forEach((payee) => {
+    if (_this.rpcData.superblock.length > 0) {
+      _this.rpcData.superblock.forEach((payee) => {
         const payeeReward = payee.amount;
         let payeeScript;
         if (payee.script) payeeScript = Buffer.from(payee.script, 'hex');
@@ -133,11 +135,11 @@ const Transactions = function(config) {
     }
 
     // Handle Founder Transactions
-    if (rpcData.founder_payments_started && rpcData.founder) {
-      const founderReward = rpcData.founder.amount;
+    if (_this.rpcData.founder_payments_started && _this.rpcData.founder) {
+      const founderReward = _this.rpcData.founder.amount;
       let founderScript;
-      if (rpcData.founder.script) founderScript = Buffer.from(rpcData.founder.script, 'hex');
-      else founderScript = utils.addressToScript(rpcData.founder.payee, network);
+      if (_this.rpcData.founder.script) founderScript = Buffer.from(_this.rpcData.founder.script, 'hex');
+      else founderScript = utils.addressToScript(_this.rpcData.founder.payee, network);
       reward -= founderReward;
       txOutputBuffers.push(Buffer.concat([
         utils.packUInt64LE(founderReward),
