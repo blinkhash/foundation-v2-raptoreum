@@ -41,6 +41,16 @@ const Network = function(config, configMain, authorizeFn) {
     }
   };
 
+  // Handle Broadcasting Difficulty changes to Clients
+  this.broadcastDifficulties = function(difficultyRatio) {
+
+    // Update Difficulty Ratio Value to Clients
+    Object.keys(_this.clients).forEach((id) => {
+      const client = _this.clients[id];
+      client.broadcastDifficultyRatio(difficultyRatio);
+    });
+  };
+
   // Handle Broadcasting New Jobs to Clients
   this.broadcastMiningJobs = function(template, cleanJobs) {
 

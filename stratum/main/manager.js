@@ -23,6 +23,19 @@ const Manager = function(config, configMain) {
   this.extraNoncePlaceholder = Buffer.from('f000000ff111111f', 'hex');
   this.extraNonce2Size = _this.extraNoncePlaceholder.length - _this.extraNonceCounter.size;
 
+  // Calculate CryptoNight Algorithm Rotation Difficulty Ratio
+  this.handleAlgorithmRotation = function(currentHash, newHash) {
+    const currentRotation = utils.getCryptoNightRotation(currentHash);
+    const currentIndex = utils.getDifficultyIndex(currentRotation);
+    const newRotation = utils.getCryptoNightRotation(newHash);
+    const newIndex = utils.getDifficultyIndex(newRotation);
+    const difficultyRatio = Math.floor(100 * newIndex / currentIndex) / 100;
+
+    console.log('handleAlgorithmRotation emit new hash');
+    console.log(difficultyRatio);
+    _this.emit('manager.block.rotation', difficultyRatio);
+  }
+  
   // Check if New Block is Processed
   this.handleUpdates = function(rpcData) {
 
@@ -32,6 +45,11 @@ const Manager = function(config, configMain) {
       _this.config,
       Object.assign({}, rpcData),
       _this.extraNoncePlaceholder);
+
+    // Detect Algotithm Rotation
+    if (tmpTemplate.rpcData.height > _this.currentJob.rpcData.height) {
+      _this.handleAlgorithmRotation(_this.currentJob.rpcData.previousblockhash, tmpTemplate.rpcData.previousblockhash);
+    }
 
     // Update Current Template
     _this.currentJob = tmpTemplate;
@@ -58,6 +76,11 @@ const Manager = function(config, configMain) {
       _this.config,
       Object.assign({}, rpcData),
       _this.extraNoncePlaceholder);
+
+    // Detect Algotithm Rotation
+    // if (tmpTemplate.rpcData.height > _this.currentJob.rpcData.height) {
+      // _this.handleAlgorithmRotation(_this.currentJob.rpcData.previousblockhash, tmpTemplate.rpcData.previousblockhash);
+    // }
 
     // Update Current Template
     _this.validJobs = {};

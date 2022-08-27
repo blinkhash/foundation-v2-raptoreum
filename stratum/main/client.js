@@ -20,6 +20,7 @@ const Client = function(config, socket, id, authorizeFn) {
 
   // Difficulty Variables
   this.pendingDifficulty = null;
+  this.algorithmRotationRatio = null;
   this.staticDifficulty = false;
 
   // Send JSON Messages
@@ -188,6 +189,12 @@ const Client = function(config, socket, id, authorizeFn) {
     return true;
   };
 
+  // ratio change
+  this.broadcastDifficultyRatio = function(difficultyRatio) {
+    _this.algorithmRotationRatio = difficultyRatio;
+    console.log('we got here: ' + difficultyRatio);
+  };
+
   // Broadcast Mining Job to Stratum Client
   this.broadcastMiningJob = function(parameters) {
 
@@ -202,9 +209,13 @@ const Client = function(config, socket, id, authorizeFn) {
 
     // Update Client Difficulty
     if (_this.pendingDifficulty != null) {
+      if (_this.algorithmRotationRatio != null) {
+        _this.pendingDifficulty *= _this.algorithmRotationRatio;
+      }
       const result = _this.broadcastDifficulty(_this.pendingDifficulty);
       if (result) _this.emit('client.difficulty.updated', _this.difficulty);
       _this.pendingDifficulty = null;
+      _this.algorithmRotationRatio = null;
     }
 
     // Broadcast Mining Job to Client

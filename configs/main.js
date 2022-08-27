@@ -10,23 +10,23 @@
 // Miscellaneous Configuration
 const config = {};
 config.language = 'english';
-config.identifier = '';
+config.identifier = 'EU';
 
 // Logger Configuration
 config.logger = {};
 config.logger.logColors = true;
-config.logger.logLevel = 'log';
+config.logger.logLevel = 'debug';
 
 // Clustering Configuration
 config.clustering = {};
-config.clustering.enabled = true;
+config.clustering.enabled = false;
 config.clustering.forks = 'auto';
 
 // TLS Configuration
 config.tls = {};
-config.tls.ca = '';
-config.tls.key = '';
-config.tls.cert = '';
+config.tls.ca = 'rootCA.crt';
+config.tls.key = 'server.crt';
+config.tls.cert = 'server.key';
 
 // Export Configuration
 module.exports = config;
