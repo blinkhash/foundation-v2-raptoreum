@@ -236,23 +236,64 @@ exports.getEncodingLength = function(data) {
 
 // Identify CryptoNight Algorithm Rotation from Block Header
 exports.getCryptoNightRotation = function(hash) {
-  // get the correct bytes from block header
-  // Identify each of the 40 CryptoNight algo rotations
-  if (true) {
-    return 'DarkLiteTurtlelite'
-  } else {
-  } 
+  const rotation = [];
+  const cryptoNightAlgos = [
+    'Dark',
+    'Darklite',
+    'Fast',
+    'Lite',
+    'Turtle',
+    'Turtlelite'
+  ];
+  
+  for (let i = hash.length - 1; i >= 0; i--) {
+    if (rotation.length === 3) {
+      break;
+    } else {
+      const nibble = parseInt(hash[i], 16);
+      const algorithm = nibble % 6;
+      if (!rotation.includes(algorithm)) {
+        rotation.push(algorithm);
+      }
+    }
+  }
+  
+  rotation.sort((a, b) => a - b);
+  return cryptoNightAlgos[rotation[0]] + cryptoNightAlgos[rotation[1]] + cryptoNightAlgos[rotation[2]];
 }
 
-// Assign Correct Difficulty Index to CryptoNight Rotation
-exports.getDifficultyIndex = function(rotation) {
+// Assing Difficulty Index to CryptoNight Rotation
+exports.getDifficultyIndex = function (rotation) {
   switch (rotation) {
-    case  'DarkLiteTurtlelite':
+    case 'DarkDarkliteFast':          // Rotation 1
+    case 'DarkFastLite':              // Rotation 5
+    case 'DarkFastTurtle':            // Rotation 6
+    case 'DarkFastTurtlelite':        // Rotation 7
+    case 'DarkliteFastLite':          // Rotation 11
+    case 'DarkliteFastTurtle':        // Rotation 12
+    case 'DarkliteFastTurtlelite':    // Rotation 13
+    case 'FastLiteTurtle':            // Rotation 17
+      return 1;
+    case 'FastLiteTurtlelite':        // Rotation 18
+      return 1.05;
+    case 'DarkDarkliteLite':          // Rotation 2
+    case 'DarkLiteTurtle':            // Rotation 8
+    case 'DarkLiteTurtlelite':        // Rotation 9
+    case 'DarkliteLiteTurtle':        // Rotation 14
+    case 'LiteTurtleTurtlelite':      // Rotation 20
       return 1.25;
-    default:
-      return 1
+    case 'DarkDarkliteTurtle':        // Rotation 3
+    case 'DarkDarkliteTurtlelite':    // Rotation 4
+      return 1.75;
+    case 'DarkTurtleTurtlelite':      // Rotation 10
+      return 2;
+    case 'DarkliteTurtleTurtlelite':  // Rotation 16
+      return 2.25
+    default: 
+      console.log('Not registering! ' + rotation);
+      return 1;
   }
-}
+};
 
 // Calculate Merkle Steps for Transactions
 exports.getMerkleSteps = function(transactions) {

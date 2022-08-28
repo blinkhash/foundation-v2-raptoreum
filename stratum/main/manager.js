@@ -3,6 +3,7 @@ const Template = require('./template');
 const events = require('events');
 const fastRoot = require('merkle-lib/fastRoot');
 const utils = require('./utils');
+const { Console } = require('console');
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -31,8 +32,6 @@ const Manager = function(config, configMain) {
     const newIndex = utils.getDifficultyIndex(newRotation);
     const difficultyRatio = Math.floor(100 * newIndex / currentIndex) / 100;
 
-    console.log('handleAlgorithmRotation emit new hash');
-    console.log(difficultyRatio);
     _this.emit('manager.block.rotation', difficultyRatio);
   }
   
@@ -45,6 +44,9 @@ const Manager = function(config, configMain) {
       _this.config,
       Object.assign({}, rpcData),
       _this.extraNoncePlaceholder);
+
+    console.log('handleUpdates()');
+    console.log(tmpTemplate.rpcData.height);
 
     // Detect Algotithm Rotation
     if (tmpTemplate.rpcData.height > _this.currentJob.rpcData.height) {
@@ -77,10 +79,12 @@ const Manager = function(config, configMain) {
       Object.assign({}, rpcData),
       _this.extraNoncePlaceholder);
 
-    // Detect Algotithm Rotation
-    // if (tmpTemplate.rpcData.height > _this.currentJob.rpcData.height) {
-      // _this.handleAlgorithmRotation(_this.currentJob.rpcData.previousblockhash, tmpTemplate.rpcData.previousblockhash);
-    // }
+    if (_this.currentJob != null && (tmpTemplate.rpcData.height > _this.currentJob.rpcData.height)) {
+      console.log('handleTemplate()')
+      console.log(_this.currentJob.rpcData.height);
+      console.log(tmpTemplate.rpcData.height);
+      _this.handleAlgorithmRotation(_this.currentJob.rpcData.previousblockhash, tmpTemplate.rpcData.previousblockhash);
+    }
 
     // Update Current Template
     _this.validJobs = {};
