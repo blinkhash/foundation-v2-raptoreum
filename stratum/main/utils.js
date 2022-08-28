@@ -290,7 +290,7 @@ exports.getDifficultyIndex = function (rotation) {
     case 'DarkliteTurtleTurtlelite':  // Rotation 16
       return 2.25
     default: 
-      console.log('Not registering! ' + rotation);
+      console.log('Reminder that something os off: ' + rotation);
       return 1;
   }
 };
