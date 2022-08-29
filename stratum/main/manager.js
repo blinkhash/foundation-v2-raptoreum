@@ -3,7 +3,6 @@ const Template = require('./template');
 const events = require('events');
 const fastRoot = require('merkle-lib/fastRoot');
 const utils = require('./utils');
-const { Console } = require('console');
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -24,12 +23,16 @@ const Manager = function(config, configMain) {
   this.extraNoncePlaceholder = Buffer.from('f000000ff111111f', 'hex');
   this.extraNonce2Size = _this.extraNoncePlaceholder.length - _this.extraNonceCounter.size;
 
-  // Calculate CryptoNight Algorithm Rotation Difficulty Ratio
+  // Calculate CryptoNight Rotation Difficulty Ratio
   this.handleAlgorithmRotation = function(currentHash, newHash) {
     const currentRotation = utils.getCryptoNightRotation(currentHash);
-    const currentIndex = utils.getDifficultyIndex(currentRotation);
+    const currentIndex = utils.getDifficultyIndex(currentRotation, config.rotations);
     const newRotation = utils.getCryptoNightRotation(newHash);
-    const newIndex = utils.getDifficultyIndex(newRotation);
+    const newIndex = utils.getDifficultyIndex(newRotation, config.rotations);
+    console.log(currentRotation);
+    console.log(currentIndex);
+    console.log(newRotation);
+    console.log(newIndex);
     const difficultyRatio = Math.floor(100 * newIndex / currentIndex) / 100;
 
     _this.emit('manager.block.rotation', difficultyRatio);
@@ -45,10 +48,8 @@ const Manager = function(config, configMain) {
       Object.assign({}, rpcData),
       _this.extraNoncePlaceholder);
 
-    console.log('handleUpdates()');
-    console.log(tmpTemplate.rpcData.height);
-
-    // Detect Algotithm Rotation
+      console.log('when does this happen?');
+    // Detect CryptoNight rotation
     if (tmpTemplate.rpcData.height > _this.currentJob.rpcData.height) {
       _this.handleAlgorithmRotation(_this.currentJob.rpcData.previousblockhash, tmpTemplate.rpcData.previousblockhash);
     }
@@ -79,10 +80,12 @@ const Manager = function(config, configMain) {
       Object.assign({}, rpcData),
       _this.extraNoncePlaceholder);
 
+      
+    // Detect CryptoNight rotation
     if (_this.currentJob != null && (tmpTemplate.rpcData.height > _this.currentJob.rpcData.height)) {
-      console.log('handleTemplate()')
-      console.log(_this.currentJob.rpcData.height);
-      console.log(tmpTemplate.rpcData.height);
+      console.log('current: ' + _this.currentJob.rpcData.height);
+      console.log('new: ' + tmpTemplate.rpcData.height);
+      console.log('new rotation processed');
       _this.handleAlgorithmRotation(_this.currentJob.rpcData.previousblockhash, tmpTemplate.rpcData.previousblockhash);
     }
 

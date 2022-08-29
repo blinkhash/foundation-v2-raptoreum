@@ -11,6 +11,30 @@
 const config = {};
 config.enabled = true;
 
+// CryptoNight Rotations
+config.rotations = {};
+config.rotations.enabled = true;
+config.rotations.DarkDarkliteFast = 1.01; // Rotation 1
+config.rotations.DarkDarkliteLite = 1.02; // Rotation 2
+config.rotations.DarkDarkliteTurtle = 1.03; // Rotation 3
+config.rotations.DarkDarkliteTurtlelite = 1.04; // Rotation 4
+config.rotations.DarkFastLite = 1.05; // Rotation 5
+config.rotations.DarkFastTurtle = 1.06; // Rotation 6
+config.rotations.DarkFastTurtlelite = 1.07; // Rotation 7
+config.rotations.DarkLiteTurtle = 1.08; // Rotation 8
+config.rotations.DarkLiteTurtlelite = 1.09; // Rotation 9
+config.rotations.DarkTurtleTurtlelite = 1.1; // Rotation 10
+config.rotations.DarkliteFastLite = 1.11; // Rotation 11
+config.rotations.DarkliteFastTurtle = 1.12; // Rotation 12
+config.rotations.DarkliteFastTurtlelite = 1.13; // Rotation 13
+config.rotations.DarkliteLiteTurtle = 1.14; // Rotation 14
+config.rotations.DarkliteLiteTurtlelite = 1.15; // Rotation 15
+config.rotations.DarkliteTurtleTurtlelite = 1.16; // Rotation 16
+config.rotations.FastLiteTurtle = 1.17; // Rotation 17
+config.rotations.FastLiteTurtlelite = 1.18; // Rotation 18
+config.rotations.FastTurtleliteTurtle = 1.19; // Rotation 19
+config.rotations.LiteTurtleTurtlelite = 1.2; // Rotation 20
+
 // Banning Configuration
 config.banning = {};
 config.banning.banLength = 600000; // ms;

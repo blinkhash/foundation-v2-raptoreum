@@ -237,14 +237,6 @@ exports.getEncodingLength = function(data) {
 // Identify CryptoNight Algorithm Rotation from Block Header
 exports.getCryptoNightRotation = function(hash) {
   const rotation = [];
-  const cryptoNightAlgos = [
-    'Dark',
-    'Darklite',
-    'Fast',
-    'Lite',
-    'Turtle',
-    'Turtlelite'
-  ];
   
   for (let i = hash.length - 1; i >= 0; i--) {
     if (rotation.length === 3) {
@@ -257,42 +249,24 @@ exports.getCryptoNightRotation = function(hash) {
       }
     }
   }
-  
-  rotation.sort((a, b) => a - b);
-  return cryptoNightAlgos[rotation[0]] + cryptoNightAlgos[rotation[1]] + cryptoNightAlgos[rotation[2]];
+
+  return rotation;
 }
 
 // Assing Difficulty Index to CryptoNight Rotation
-exports.getDifficultyIndex = function (rotation) {
-  switch (rotation) {
-    case 'DarkDarkliteFast':          // Rotation 1
-    case 'DarkFastLite':              // Rotation 5
-    case 'DarkFastTurtle':            // Rotation 6
-    case 'DarkFastTurtlelite':        // Rotation 7
-    case 'DarkliteFastLite':          // Rotation 11
-    case 'DarkliteFastTurtle':        // Rotation 12
-    case 'DarkliteFastTurtlelite':    // Rotation 13
-    case 'FastLiteTurtle':            // Rotation 17
-      return 1;
-    case 'FastLiteTurtlelite':        // Rotation 18
-      return 1.05;
-    case 'DarkDarkliteLite':          // Rotation 2
-    case 'DarkLiteTurtle':            // Rotation 8
-    case 'DarkLiteTurtlelite':        // Rotation 9
-    case 'DarkliteLiteTurtle':        // Rotation 14
-    case 'LiteTurtleTurtlelite':      // Rotation 20
-      return 1.25;
-    case 'DarkDarkliteTurtle':        // Rotation 3
-    case 'DarkDarkliteTurtlelite':    // Rotation 4
-      return 1.75;
-    case 'DarkTurtleTurtlelite':      // Rotation 10
-      return 2;
-    case 'DarkliteTurtleTurtlelite':  // Rotation 16
-      return 2.25
-    default: 
-      console.log('Reminder that something os off: ' + rotation);
-      return 1;
-  }
+exports.getDifficultyIndex = function (rotation, cnRotations) {
+  rotation.sort((a, b) => a - b);
+  const cnAlgorithms = [
+    'Dark',
+    'Darklite',
+    'Fast',
+    'Lite',
+    'Turtle',
+    'Turtlelite'
+  ];
+  const rotationName = cnAlgorithms[rotation[0]] + cnAlgorithms[rotation[1]] + cnAlgorithms[rotation[2]];
+
+  return cnRotations[rotationName];
 };
 
 // Calculate Merkle Steps for Transactions

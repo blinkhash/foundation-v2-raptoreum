@@ -42,6 +42,7 @@ const Client = function(config, socket, id, authorizeFn) {
   // Push Updated Difficulty to Queue
   this.enqueueDifficulty = function(difficulty) {
     if (!_this.staticDifficulty) {
+      console.log('pending diff set');
       _this.pendingDifficulty = difficulty;
       _this.emit('client.difficulty.queued', difficulty);
     }
@@ -189,10 +190,9 @@ const Client = function(config, socket, id, authorizeFn) {
     return true;
   };
 
-  // ratio change
+  // Broadcast Change CryptoNight Rotation Difficulty
   this.broadcastDifficultyRatio = function(difficultyRatio) {
     _this.algorithmRotationRatio = difficultyRatio;
-    console.log('we got here: ' + difficultyRatio);
   };
 
   // Broadcast Mining Job to Stratum Client
@@ -208,12 +208,18 @@ const Client = function(config, socket, id, authorizeFn) {
     }
 
     // Update Client Difficulty
-    if (_this.pendingDifficulty != null) {
-      if (_this.algorithmRotationRatio != null) {
-        console.log('pending difficulty: ' + _this.pendingDifficulty);
-        _this.pendingDifficulty *= _this.algorithmRotationRatio;
-        console.log('updated difficulty: ' + _this.pendingDifficulty);
-      }
+    if (_this.algorithmRotationRatio != null || _this.pendingDifficulty != null) {
+      if (!this.config.rotations.enabled) _this.algorithmRotationRatio = 1;
+
+      console.log('_this.algorithmRotationRatio: ' + _this.algorithmRotationRatio);
+      console.log('_this.pendingDifficulty: ' + _this.pendingDifficulty);
+      console.log('enabled: ' + this.config.rotations.enabled);
+
+      _this.pendingDifficulty = _this.pendingDifficulty != null ? _this.pendingDifficulty : _this.difficulty;
+      _this.algorithmRotationRatio = _this.algorithmRotationRatio != null ? _this.algorithmRotationRatio : 1;
+
+      _this.pendingDifficulty *= _this.algorithmRotationRatio;
+
       const result = _this.broadcastDifficulty(_this.pendingDifficulty);
       if (result) _this.emit('client.difficulty.updated', _this.difficulty);
       _this.pendingDifficulty = null;

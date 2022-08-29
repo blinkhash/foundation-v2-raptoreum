@@ -2,6 +2,8 @@ const events = require('events');
 
 ////////////////////////////////////////////////////////////////////////////////
 
+// why diff update queued right after diff changes
+
 // Main Difficulty Function
 const Difficulty = function(config) {
 
@@ -10,7 +12,7 @@ const Difficulty = function(config) {
   this.clients = {};
 
   // Difficulty Variables
-  this.maxSize = _this.config.retargetTime / _this.config.targetTime * 4;
+  this.maxSize = _this.config.retargetTime / _this.config.targetTime * 10;
   this.minTime = _this.config.targetTime * (1 + _this.config.variance);
   this.maxTime = _this.config.targetTime * (1 - _this.config.variance);
 
@@ -29,6 +31,8 @@ const Difficulty = function(config) {
     const queue = _this.clients[client.id];
     const curAverage = queue.reduce((a, b) => a + b, 0) / queue.length;
     let curDifference = _this.config.targetTime / curAverage;
+
+    console.log('difficulty: ' + client.difficulty);
 
     // Shift Difficulty Down
     if (curAverage > _this.maxTime && client.difficulty > _this.config.minimum) {
@@ -68,6 +72,7 @@ const Difficulty = function(config) {
       return;
     }
 
+    console.log(_this.clients[client.id]);
     // Append New Value to Queue
     const queue = _this.clients[client.id];
     if (queue.length >= _this.maxSize) queue.shift();
