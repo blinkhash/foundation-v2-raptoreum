@@ -76,6 +76,7 @@ config.primary.address = '[address]';
 config.primary.coin = {};
 config.primary.coin.name = 'Raptoreum';
 config.primary.coin.symbol = 'RTM';
+config.primary.coin.algorithm = 'ghostrider';
 
 // Daemon Configuration
 config.primary.daemons = [];
