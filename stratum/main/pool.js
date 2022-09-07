@@ -399,6 +399,7 @@ const Pool = function(config, configMain, responseFn) {
       _this.settings.testnet = (resultData.getblockchaininfo.chain === 'test') ? true : false;
       _this.statistics.connections = resultData.getnetworkinfo.connections;
       _this.statistics.difficulty = difficulty * Algorithms.ghostrider.multiplier;
+      console.log("diff: " + difficulty)
       _this.config.settings.testnet = _this.settings.testnet;
 
       callback();

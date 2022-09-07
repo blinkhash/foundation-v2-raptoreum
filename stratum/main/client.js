@@ -220,6 +220,8 @@ const Client = function(config, socket, id, authorizeFn) {
 
       _this.pendingDifficulty *= _this.algorithmRotationRatio;
 
+      if (_this.pendingDifficulty === 1) _this.pendingDifficulty = null;
+      
       const result = _this.broadcastDifficulty(_this.pendingDifficulty);
       if (result) _this.emit('client.difficulty.updated', _this.difficulty);
       _this.pendingDifficulty = null;

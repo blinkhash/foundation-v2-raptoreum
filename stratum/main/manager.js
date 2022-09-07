@@ -48,7 +48,6 @@ const Manager = function(config, configMain) {
       Object.assign({}, rpcData),
       _this.extraNoncePlaceholder);
 
-      console.log('when does this happen?');
     // Detect CryptoNight rotation
     if (tmpTemplate.rpcData.height > _this.currentJob.rpcData.height) {
       _this.handleAlgorithmRotation(_this.currentJob.rpcData.previousblockhash, tmpTemplate.rpcData.previousblockhash);
@@ -63,6 +62,8 @@ const Manager = function(config, configMain) {
 
   // Check if New Block is Processed
   this.handleTemplate = function(rpcData, newBlock) {
+
+    console.log('when does this happen?');
 
     // If Current Job !== Previous Job
     let isNewBlock = _this.currentJob === null;
