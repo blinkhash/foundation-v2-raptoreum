@@ -63,8 +63,6 @@ const Manager = function(config, configMain) {
   // Check if New Block is Processed
   this.handleTemplate = function(rpcData, newBlock) {
 
-    console.log('when does this happen?');
-
     // If Current Job !== Previous Job
     let isNewBlock = _this.currentJob === null;
     if (!isNewBlock && rpcData.height >= _this.currentJob.rpcData.height &&
@@ -231,6 +229,7 @@ const Manager = function(config, configMain) {
       shareDiff: shareDiff.toFixed(8),
     };
 
+    console.log(shareData);
     _this.emit('manager.share', shareData, auxShareData, blockValid);
     return { error: null, hash: blockHash, hex: blockHex, response: true };
   };

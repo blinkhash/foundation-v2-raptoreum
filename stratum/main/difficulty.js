@@ -2,8 +2,6 @@ const events = require('events');
 
 ////////////////////////////////////////////////////////////////////////////////
 
-// why diff update queued right after diff changes
-
 // Main Difficulty Function
 const Difficulty = function(config) {
 
