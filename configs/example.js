@@ -10,6 +10,7 @@
 // Miscellaneous Configuration
 const config = {};
 config.enabled = true;
+config.settings = {};
 
 // CryptoNight Rotations
 config.rotations = {};
@@ -36,11 +37,23 @@ config.rotations.FastTurtleliteTurtle = 1.19; // Rotation 19
 config.rotations.LiteTurtleTurtlelite = 1.2; // Rotation 20
 
 // Banning Configuration
-config.banning = {};
-config.banning.banLength = 600000; // ms;
-config.banning.checkThreshold = 500;
-config.banning.invalidPercent = 50;
-config.banning.purgeInterval = 300000; // ms;
+config.settings.banning = {};
+config.settings.banning.banLength = 600000; // ms;
+config.settings.banning.checkThreshold = 500;
+config.settings.banning.invalidPercent = 50;
+config.settings.banning.purgeInterval = 300000; // ms;
+
+// Timeout Configuration
+config.settings.timeout = {};
+config.settings.timeout.connection = 600000; // ms
+config.settings.timeout.rebroadcast = 60000; // ms
+
+// Interval Configuration
+config.settings.interval = {};
+config.settings.interval.blocks = 1000; // ms
+
+// Shared Configuration
+////////////////////////////////////////////////////////////////////////////////
 
 // Port Configuration
 config.ports = [];
@@ -48,7 +61,6 @@ config.ports = [];
 const ports1 = {};
 ports1.port = 3002;
 ports1.enabled = true;
-ports1.type = 'shared';
 ports1.tls = false;
 ports1.difficulty = {};
 ports1.difficulty.initial = 32;
@@ -58,12 +70,6 @@ ports1.difficulty.targetTime = 15;
 ports1.difficulty.retargetTime = 90;
 ports1.difficulty.variance = 0.3;
 config.ports.push(ports1);
-
-// Settings Configuration
-config.settings = {};
-config.settings.blockRefreshInterval = 1000; // ms;
-config.settings.connectionTimeout = 600000; // ms;
-config.settings.jobRebroadcastTimeout = 60000; // ms;
 
 // Primary Configuration
 ////////////////////////////////////////////////////////////////////////////////

@@ -10,7 +10,7 @@ const utils = require('./utils');
 ////////////////////////////////////////////////////////////////////////////////
 
 // Main Pool Function
-const Pool = function(config, configMain, responseFn) {
+const Pool = function(config, configMain, callback) {
 
   const _this = this;
   this.config = config;
@@ -21,19 +21,22 @@ const Pool = function(config, configMain, responseFn) {
   this.difficulty = {};
   this.statistics = {};
   this.settings = {};
-  this.responseFn = responseFn;
+  this.callback = callback;
 
   // Pool Variables [2]
-  this.primary = {};
+  this.primary = {
+    payments: { enabled: _this.config.primary.payments &&
+      _this.config.primary.payments.enabled }};
   this.auxiliary = {
     enabled: _this.config.auxiliary && _this.config.auxiliary.enabled,
-  };
+    payments: { enabled: _this.config.auxiliary && _this.config.auxiliary.enabled &&
+      _this.config.auxiliary.payments && _this.config.auxiliary.payments.enabled }};
 
   // Emit Logging Events
   this.emitLog = function(level, limiting, text) {
     if (!limiting || !process.env.forkId || process.env.forkId === '0') {
       _this.emit('pool.log', level, text);
-      if (level === 'error') _this.responseFn(text);
+      if (level === 'error') _this.callback(text);
     }
   };
 
@@ -136,12 +139,53 @@ const Pool = function(config, configMain, responseFn) {
     });
   };
 
+  // Handle Validating Worker Shares
+  this.handleValidation = function(block, workers) {
+
+    // Specify Block Features
+    let totalWork = 0;
+    const transactionFee = _this.config.primary.payments ?
+      _this.config.primary.payments.transactionFee : 0;
+    const maxTime = Math.max(...workers.flatMap((worker) => worker.times));
+    const reward = block.reward - transactionFee;
+
+    // Calculate Worker Percentage
+    const validated = {};
+    workers.forEach((worker) => {
+
+      // Validate Shares for Workers w/ 51% Time
+      let shares = worker.work;
+      const timePeriod = utils.roundTo(worker.times / maxTime, 2);
+      if (timePeriod < 0.51) {
+        const lost = shares * (1 - timePeriod);
+        shares = utils.roundTo(Math.max(shares - lost, 0), 2);
+      }
+
+      // Add Validated Shares to Records
+      totalWork += shares;
+      if (worker.miner in validated) validated[worker.miner] += shares;
+      else validated[worker.miner] = shares;
+    });
+
+    // Determine Worker Rewards
+    const updates = {};
+    Object.keys(validated).forEach((address) => {
+      const percentage = validated[address] / totalWork;
+      const minerReward = utils.roundTo(reward * percentage, 8);
+      if (address in updates) updates[address] += minerReward;
+      else updates[address] = minerReward;
+    });
+
+    // Return Worker Rewards
+    return updates;
+  };
+
   // Process Primary Block Candidate
   this.handlePrimary = function(shareData, blockValid, callback) {
 
     // Block is Not Valid
     if (!blockValid) {
-      callback(false, shareData);
+      callback(null, shareData);
       return;
     }
 
@@ -217,12 +261,209 @@ const Pool = function(config, configMain, responseFn) {
       const rejected = results.filter((result) => result.response === 'rejected');
       const accepted = results.filter((result) => !result.error && result.response !== 'rejected');
       if (rejected.length >= 1) {
-        callback(true, _this.text.stratumBlocksText3(rejected[0].instance.host));
+        callback('bad-primary-rejected', _this.text.stratumBlocksText3(rejected[0].instance.host));
       } else if (accepted.length < 1) {
-        callback(true, _this.text.stratumBlocksText2(results[0].instance.host, JSON.stringify(results[0].error)));
+        callback('bad-primary-orphan', _this.text.stratumBlocksText2(results[0].instance.host, JSON.stringify(results[0].error)));
       }
-      callback(false, null);
+      callback(null, null);
     });
+  };
+
+  // Process Worker Payments for Primary Blocks
+  this.handlePrimaryRounds = function(blocks, callback) {
+
+    // Get Hashes for Each Transaction
+    const commands = blocks.map((block) => ['gettransaction', [block.transaction]]);
+
+    // Derive Details for Every Transaction
+    _this.primary.daemon.sendCommands(commands, true, (result) => {
+      if (result.error) {
+        _this.emitLog('error', false, _this.text.stratumPaymentsText1(JSON.stringify(result.error)));
+        callback(result.error, null);
+        return;
+      }
+
+      // Handle Individual Transactions
+      if (!Array.isArray(result)) result = [result];
+      result.forEach((tx, idx) => {
+        const block = blocks[idx] || {};
+
+        // Check Daemon Edge Cases
+        if (tx.error && tx.error.code === -5) {
+          _this.emitLog('warning', false, _this.text.stratumPaymentsText2(block.transaction));
+          block.category = 'orphan';
+          return;
+        } else if (tx.error || !tx.response) {
+          _this.emitLog('error', false, _this.text.stratumPaymentsText3(block.transaction));
+          return;
+        } else if (!tx.response.details || (tx.response.details && tx.response.details.length === 0)) {
+          _this.emitLog('warning', false, _this.text.stratumPaymentsText4(block.transaction));
+          block.category = 'orphan';
+          return;
+        }
+
+        // Filter Transactions by Address
+        const transactions = tx.response.details.filter((tx) => {
+          let txAddress = tx.address;
+          if (txAddress.indexOf(':') > -1) txAddress = txAddress.split(':')[1];
+          return txAddress === _this.config.primary.address;
+        });
+
+        // Find Generation Transaction
+        let generationTx = null;
+        if (transactions.length >= 1) {
+          generationTx = transactions[0];
+        } else if (tx.response.details.length > 1){
+          generationTx = tx.response.details.sort((a, b) => a.vout - b.vout)[0];
+        } else if (tx.response.details.length === 1) {
+          generationTx = tx.response.details[0];
+        }
+
+        // Update Block Details
+        block.category = generationTx.category;
+        block.confirmations = parseInt(tx.response.confirmations);
+        if (['immature', 'generate'].includes(block.category)) {
+          block.reward = utils.roundTo(parseFloat(generationTx.amount), 8);
+        }
+      });
+
+      // Return Updated Block Data
+      callback(null, blocks);
+    });
+  };
+
+  // Process Upcoming Primary Payments
+  this.handlePrimaryWorkers = function(blocks, workers, callback) {
+
+    // Determine Block Handling Procedures
+    const updates = {};
+    blocks.forEach((block, idx) => {
+      const current = workers[idx] || [];
+      if (block.type !== 'primary') return;
+
+      // Establish Separate Behavior
+      let immature, generate;
+      switch (block.category) {
+
+      // Orphan Behavior
+      case 'orphan':
+        break;
+
+      // Immature Behavior
+      case 'immature':
+        immature = _this.handleValidation(block, current);
+        Object.keys(immature).forEach((address) => {
+          if (address in updates) updates[address].immature += immature[address];
+          else updates[address] = { immature: immature[address], generate: 0 };
+        });
+        break;
+
+      // Generate Behavior
+      case 'generate':
+        generate = _this.handleValidation(block, current);
+        Object.keys(generate).forEach((address) => {
+          if (address in updates) updates[address].generate += generate[address];
+          else updates[address] = { immature: 0, generate: generate[address] };
+        });
+        break;
+
+      // Default Behavior
+      default:
+        break;
+      }
+    });
+
+    // Return Updated Worker Data
+    callback(updates);
+  };
+
+  // Validate Primary Balance and Checks
+  this.handlePrimaryBalances = function(payments, callback) {
+
+    // Calculate Total Payment to Each Miner
+    const amounts = {};
+    Object.keys(payments).forEach((address) => {
+      amounts[address] = utils.roundTo(payments[address], 8);
+    });
+
+    // Build Daemon Commands
+    const total = Object.values(amounts).reduce((sum, cur) => sum + cur, 0);
+    const minConfirmations = _this.config.primary.payments ?
+      _this.config.primary.payments.minConfirmations : 0;
+    const commands = [['listunspent', [minConfirmations, 99999999]]];
+
+    // Get Current Balance of Daemon
+    if (_this.primary.payments.enabled) {
+      _this.primary.payments.daemon.sendCommands(commands, true, (result) => {
+        if (result.error) {
+          _this.emitLog('error', false, _this.text.stratumPaymentsText5(JSON.stringify(result.error)));
+          callback(result.error, null);
+          return;
+        }
+
+        // Calculate Total Balance from Response
+        let balance = 0;
+        if (result.response != null && result.response.length >= 1) {
+          result.response.forEach((transaction) => {
+            if (transaction.address && transaction.address !== null) {
+              balance += parseFloat(transaction.amount || 0);
+            }
+          });
+        }
+
+        // Check if Balance >= Amounts
+        if (balance < total) {
+          _this.emitLog('error', false, _this.text.stratumPaymentsText6(balance, total));
+          callback('bad-insufficient-funds', null);
+        } else callback(null, balance);
+      });
+    } else callback(null, 0);
+  };
+
+  // Send Primary Payments to Miners
+  this.handlePrimaryPayments = function(payments, callback) {
+
+    // Calculate Total Payment to Each Miner
+    const amounts = {};
+    Object.keys(payments).forEach((address) => {
+      amounts[address] = utils.roundTo(payments[address], 8);
+    });
+
+    // Validate Amounts >= Minimum
+    const balances = {};
+    Object.keys(amounts).forEach((address) => {
+      if (amounts[address] < _this.config.primary.payments.minPayment ||
+        !_this.primary.payments.enabled) {
+        balances[address] = amounts[address];
+        delete amounts[address];
+      }
+    });
+
+    // Build Daemon Commands
+    const total = Object.values(amounts).reduce((sum, cur) => sum + cur, 0);
+    const commands = [['sendmany', ['', amounts]]];
+
+    // Send Primary Payments using Sendmany
+    if (_this.primary.payments.enabled && total > 0) {
+      _this.primary.payments.daemon.sendCommands(commands, true, (result) => {
+        if (result.error) {
+          _this.emitLog('error', false, _this.text.stratumPaymentsText7(JSON.stringify(result.error)));
+          callback(result.error, {}, {}, null);
+          return;
+        }
+
+        // Return Transaction through Callback
+        if (result.response) {
+          const count = Object.keys(amounts).length;
+          const symbol = _this.config.primary.coin.symbol;
+          _this.emitLog('special', false, _this.text.stratumPaymentsText8(total, symbol, count, result.response));
+          callback(null, amounts, balances, result.response);
+        } else {
+          _this.emitLog('error', false, _this.text.stratumPaymentsText9());
+          callback('bad-transaction-undefined', {}, {}, null);
+        }
+      });
+    } else callback(null, amounts, balances, null);
   };
 
   // Process Auxiliary Block Candidate
@@ -230,7 +471,7 @@ const Pool = function(config, configMain, responseFn) {
 
     // Block is Not Valid
     if (!blockValid) {
-      callback(false, shareData);
+      callback(null, shareData);
       return;
     }
 
@@ -323,35 +564,252 @@ const Pool = function(config, configMain, responseFn) {
       const rejected = results.filter((result) => result.response === 'rejected');
       const accepted = results.filter((result) => !result.error && result.response !== 'rejected');
       if (rejected.length >= 1) {
-        callback(true, _this.text.stratumBlocksText6(rejected[0].instance.host));
+        callback('bad-auxiliary-rejected', _this.text.stratumBlocksText6(rejected[0].instance.host));
       } else if (accepted.length < 1) {
-        callback(true, _this.text.stratumBlocksText5(results[0].instance.host, JSON.stringify(results[0].error)));
+        callback('bad-auxiliary-orphan', _this.text.stratumBlocksText5(results[0].instance.host, JSON.stringify(results[0].error)));
       }
-      callback(false, null);
+      callback(null, null);
     });
   };
 
-  // Build Stratum Daemons
-  this.setupDaemons = function(callback) {
+  // Process Submitted Auxiliary Blocks
+  this.handleAuxiliaryRounds = function(blocks, callback) {
+
+    // Get Hashes for Each Transaction
+    const commands = blocks.map((block) => ['gettransaction', [block.transaction]]);
+
+    // Derive Details for Every Transaction
+    _this.auxiliary.daemon.sendCommands(commands, true, (result) => {
+      if (result.error) {
+        _this.emitLog('error', false, _this.text.stratumPaymentsText1(JSON.stringify(result.error)));
+        callback(result.error, null);
+        return;
+      }
+
+      // Handle Individual Transactions
+      if (!Array.isArray(result)) result = [result];
+      result.forEach((tx, idx) => {
+        const block = blocks[idx] || {};
+
+        // Check Daemon Edge Cases
+        if (tx.error && tx.error.code === -5) {
+          _this.emitLog('warning', false, _this.text.stratumPaymentsText2(block.transaction));
+          block.category = 'orphan';
+          return;
+        } else if (tx.error || !tx.response) {
+          _this.emitLog('error', false, _this.text.stratumPaymentsText3(block.transaction));
+          return;
+        } else if (!tx.response.details || (tx.response.details && tx.response.details.length === 0)) {
+          _this.emitLog('warning', false, _this.text.stratumPaymentsText4(block.transaction));
+          block.category = 'orphan';
+          return;
+        }
+
+        // Find Generation Transaction
+        let generationTx = null;
+        if (tx.response.details.length >= 1) {
+          generationTx = tx.response.details[0];
+        } else if (tx.response.details.length > 1){
+          generationTx = tx.response.details.sort((a, b) => a.vout - b.vout)[0];
+        } else if (tx.response.details.length === 1) {
+          generationTx = tx.response.details[0];
+        }
+
+        // Update Block Details
+        block.category = generationTx.category;
+        block.confirmations = parseInt(tx.response.confirmations);
+        if (['immature', 'generate'].includes(block.category)) {
+          block.reward = utils.roundTo(parseFloat(generationTx.amount), 8);
+        }
+      });
+
+      // Return Updated Block Data
+      callback(null, blocks);
+    });
+  };
+
+  // Process Upcoming Auxiliary Payments
+  this.handleAuxiliaryWorkers = function(blocks, workers, callback) {
+
+    // Determine Block Handling Procedures
+    const updates = {};
+    blocks.forEach((block, idx) => {
+      const current = workers[idx] || [];
+      if (block.type !== 'auxiliary') return;
+
+      // Establish Separate Behavior
+      let immature, generate;
+      switch (block.category) {
+
+      // Orphan Behavior
+      case 'orphan':
+        break;
+
+      // Immature Behavior
+      case 'immature':
+        immature = _this.handleValidation(block, current);
+        Object.keys(immature).forEach((address) => {
+          if (address in updates) updates[address].immature += immature[address];
+          else updates[address] = { immature: immature[address], generate: 0 };
+        });
+        break;
+
+      // Generate Behavior
+      case 'generate':
+        generate = _this.handleValidation(block, current);
+        Object.keys(generate).forEach((address) => {
+          if (address in updates) updates[address].generate += generate[address];
+          else updates[address] = { immature: 0, generate: generate[address] };
+        });
+        break;
+
+      // Default Behavior
+      default:
+        break;
+      }
+    });
+
+    // Return Updated Worker Data
+    callback(updates);
+  };
+
+  // Validate Auxiliary Balance and Checks
+  this.handleAuxiliaryBalances = function(payments, callback) {
+
+    // Calculate Total Payment to Each Miner
+    const amounts = {};
+    Object.keys(payments).forEach((address) => {
+      amounts[address] = utils.roundTo(payments[address], 8);
+    });
+
+    // Build Daemon Commands
+    const total = Object.values(amounts).reduce((sum, cur) => sum + cur, 0);
+    const minConfirmations = _this.config.auxiliary.payments ?
+      _this.config.auxiliary.payments.minConfirmations : 0;
+    const commands = [['listunspent', [minConfirmations, 99999999]]];
+
+    // Get Current Balance of Daemon
+    if (_this.auxiliary.payments.enabled) {
+      _this.auxiliary.payments.daemon.sendCommands(commands, true, (result) => {
+        if (result.error) {
+          _this.emitLog('error', false, _this.text.stratumPaymentsText5(JSON.stringify(result.error)));
+          callback(result.error, null);
+          return;
+        }
+
+        // Calculate Total Balance from Response
+        let balance = 0;
+        if (result.response != null && result.response.length >= 1) {
+          result.response.forEach((transaction) => {
+            if (transaction.address && transaction.address !== null) {
+              balance += parseFloat(transaction.amount || 0);
+            }
+          });
+        }
+
+        // Check if Balance >= Amounts
+        if (balance < total) {
+          _this.emitLog('error', false, _this.text.stratumPaymentsText6(balance, total));
+          callback('bad-insufficient-funds', null);
+        } else callback(null, balance);
+      });
+    } else callback(null, 0);
+  };
+
+  // Send Auxiliary Payments to Miners
+  this.handleAuxiliaryPayments = function(payments, callback) {
+
+    // Calculate Total Payment to Each Miner
+    const amounts = {};
+    Object.keys(payments).forEach((address) => {
+      amounts[address] = utils.roundTo(payments[address], 8);
+    });
+
+    // Validate Amounts >= Minimum
+    const balances = {};
+    Object.keys(amounts).forEach((address) => {
+      if (amounts[address] < _this.config.auxiliary.payments.minPayment ||
+        !_this.auxiliary.payments.enabled) {
+        balances[address] = amounts[address];
+        delete amounts[address];
+      }
+    });
+
+    // Build Daemon Commands
+    const total = Object.values(amounts).reduce((sum, cur) => sum + cur, 0);
+    const commands = [['sendmany', ['', amounts]]];
+
+    // Send Aauxiliary Payments using Sendmany
+    if (_this.auxiliary.payments.enabled && total > 0) {
+      _this.auxiliary.payments.daemon.sendCommands(commands, true, (result) => {
+        if (result.error) {
+          _this.emitLog('error', false, _this.text.stratumPaymentsText7(JSON.stringify(result.error)));
+          callback(result.error, {}, {}, null);
+          return;
+        }
+
+        // Return Transaction through Callback
+        if (result.response) {
+          const count = Object.keys(amounts).length;
+          const symbol = _this.config.auxiliary.coin.symbol;
+          _this.emitLog('special', false, _this.text.stratumPaymentsText8(total, symbol, count, result.response));
+          callback(null, amounts, balances, result.response);
+        } else {
+          _this.emitLog('error', false, _this.text.stratumPaymentsText9());
+          callback('bad-transaction-undefined', {}, {}, null);
+        }
+      });
+    } else callback(null, amounts, balances, null);
+  };
+
+  // Build Primary Stratum Daemons
+  this.setupPrimaryDaemons = function(callback) {
 
     // Load Daemons from Configuration
     const primaryDaemons = _this.config.primary.daemons;
-    const auxiliaryDaemons = _this.auxiliary.enabled ? _this.config.auxiliary.daemons : [];
+    const primaryPaymentDaemon = _this.primary.payments.enabled ?
+      [_this.config.primary.payments.daemon] : [];
 
     // Build Daemon Instances
     _this.primary.daemon = new Daemon(primaryDaemons);
-    _this.auxiliary.daemon = new Daemon(auxiliaryDaemons);
+    _this.primary.payments.daemon = new Daemon(primaryPaymentDaemon);
 
-    // Initialize Daemons and Load Settings
+    // Initialize Primary Daemons and Load Settings
     _this.primary.daemon.checkInstances((error) => {
       if (error) _this.emitLog('error', false, _this.text.loaderDaemonsText1());
-      else if (_this.auxiliary.enabled) {
-        _this.auxiliary.daemon.checkInstances((error) => {
+      else if (_this.primary.payments.enabled) {
+        _this.primary.payments.daemon.checkInstances((error) => {
           if (error) _this.emitLog('error', false, _this.text.loaderDaemonsText2());
           else callback();
         });
       } else callback();
     });
+  };
+
+  // Build Auxiliary Stratum Daemons
+  this.setupAuxiliaryDaemons = function(callback) {
+
+    // Load Daemons from Configuration
+    const auxiliaryDaemons = _this.auxiliary.enabled ? _this.config.auxiliary.daemons : [];
+    const auxiliaryPaymentDaemon = _this.auxiliary.payments.enabled ?
+      [_this.config.auxiliary.payments.daemon] : [];
+
+    // Build Daemon Instances
+    _this.auxiliary.daemon = new Daemon(auxiliaryDaemons);
+    _this.auxiliary.payments.daemon = new Daemon(auxiliaryPaymentDaemon);
+
+    // Initialize Auxiliary Daemons and Load Settings
+    if (_this.auxiliary.enabled) {
+      _this.auxiliary.daemon.checkInstances((error) => {
+        if (error) _this.emitLog('error', false, _this.text.loaderDaemonsText3());
+        else if (_this.auxiliary.payments.enabled) {
+          _this.auxiliary.payments.daemon.checkInstances((error) => {
+            if (error) _this.emitLog('error', false, _this.text.loaderDaemonsText4());
+            else callback();
+          });
+        } else callback();
+      });
+    } else callback();
   };
 
   // Setup Pool Ports
@@ -415,6 +873,7 @@ const Pool = function(config, configMain, responseFn) {
       console.log("diff: " + difficulty)
       _this.config.settings.testnet = _this.settings.testnet;
 
+      // Handle Callback
       callback();
     });
   };
@@ -570,7 +1029,7 @@ const Pool = function(config, configMain, responseFn) {
 
     // Build Initial Variables
     let pollingFlag = false;
-    const pollingInterval = _this.config.settings.blockRefreshInterval;
+    const pollingInterval = _this.config.settings.interval.blocks;
 
     // Handle Polling Interval
     setInterval(() => {
@@ -697,7 +1156,7 @@ const Pool = function(config, configMain, responseFn) {
     // Handle Periods Without Found Blocks/Shares
     _this.network.on('network.timeout', () => {
       _this.handlePrimaryTemplate(false, (error, rpcData, newBlock) => {
-        _this.emitLog('debug', true, _this.text.stratumNetworkText1(_this.config.settings.jobRebroadcastTimeout / 1000));
+        _this.emitLog('debug', true, _this.text.stratumNetworkText1(_this.config.settings.timeout.rebroadcast / 1000));
         if (error || newBlock) return;
         _this.manager.handleUpdates(rpcData);
       });
