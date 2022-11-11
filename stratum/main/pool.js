@@ -922,7 +922,18 @@ const Pool = function(config, configMain, callback) {
 
       // Process Share/Primary Submission
       _this.handlePrimary(shareData, blockValid, (accepted, outputData) => {
-        _this.emit('pool.share', outputData, shareValid, accepted);
+
+        // Check For Lean Stratum and Stratum Mode
+        if (_this.configMain.stratum.lean && _this.configMain.stratum.instance == 'stratum') {
+          delete outputData.hex;
+          delete outputData.header;
+          delete outputData.headerDiff;
+          delete outputData.coinbase;
+          _this.emit('pool.meta_share', outputData, shareValid, accepted);
+        } else {
+          _this.emit('pool.share', outputData, shareValid, accepted);
+        }
+
         _this.handlePrimaryTemplate(auxBlockValid, (error, result, newBlock) => {
           if (accepted && newBlock && blockValid) {
             _this.emitLog('special', false, _this.text.stratumManagerText1());
@@ -933,7 +944,20 @@ const Pool = function(config, configMain, callback) {
       // Process Auxiliary Submission
       if (!shareData.error && auxBlockValid) {
         _this.handleAuxiliary(auxShareData, true, (accepted, outputData) => {
-          _this.emit('pool.share', outputData, shareValid, accepted);
+
+          // Check if This Instance Emits Network Changes
+          if (_this.configMain.stratum.lean && _this.configMain.stratum.instance == 'stratum') {
+            
+            // Delete Data Unnecessary for Share Processing
+            delete outputData.hex;
+            delete outputData.header;
+            delete outputData.headerDiff;
+            delete outputData.coinbase;
+            _this.emit('pool.meta_share', outputData, shareValid, accepted);
+          } else {
+            _this.emit('pool.share', outputData, shareValid, accepted);
+          };
+
           if (accepted && auxBlockValid) {
             _this.emitLog('special', false, _this.text.stratumManagerText2());
           }
@@ -944,16 +968,20 @@ const Pool = function(config, configMain, callback) {
     // Handle New Block Templates
     _this.manager.on('manager.block.new', (template) => {
 
-      // Process Primary Network Data
-      _this.checkNetwork(_this.primary.daemon, 'primary', (networkData) => {
-        _this.emit('pool.network', networkData);
-      });
+      // Check if This Instance Emits Network Changes
+      if (!_this.configMain.stratum.lean || _this.configMain.stratum.instance != 'stratum') {
 
-      // Process Auxiliary Network Data
-      if (_this.auxiliary.enabled) {
-        _this.checkNetwork(_this.auxiliary.daemon, 'auxiliary', (auxNetworkData) => {
-          _this.emit('pool.network', auxNetworkData);
+        // Process Primary Network Data
+        _this.checkNetwork(_this.primary.daemon, 'primary', (networkData) => {
+          _this.emit('pool.network', networkData);
         });
+  
+        // Process Auxiliary Network Data
+        if (_this.auxiliary.enabled) {
+          _this.checkNetwork(_this.auxiliary.daemon, 'auxiliary', (auxNetworkData) => {
+            _this.emit('pool.network', auxNetworkData);
+          });
+        }
       }
 
       // Broadcast New Mining Jobs to Clients

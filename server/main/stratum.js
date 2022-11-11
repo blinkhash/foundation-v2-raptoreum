@@ -16,6 +16,22 @@ const Stratum = function (logger, config, configMain) {
   process.setMaxListeners(0);
   this.forkId = process.env.forkId;
 
+  // Log New Share
+  this.handleShareProcessed = function(shareData, shareValid) {
+    // Processed Share was Accepted
+    if (shareValid) {
+      const address = shareData.addrPrimary.split('.')[0];
+      const text = _this.text.stratumSharesText1(shareData.difficulty, shareData.shareDiff, address, shareData.ip);
+      _this.logger['log']('Pool', _this.config.name, [text]);
+
+    // Processed Share was Rejected
+    } else {
+      const address = shareData.addrPrimary.split('.')[0];
+      const text = _this.text.stratumSharesText2(shareData.error, address, shareData.ip);
+      _this.logger['error']('Pool', _this.config.name, [text]);
+    }
+  };
+
   // Build Stratum from Configuration
   this.handleStratum = function() {
 
@@ -30,19 +46,7 @@ const Stratum = function (logger, config, configMain) {
 
     // Handle Stratum Share Events
     _this.stratum.on('pool.share', (shareData, shareValid) => {
-
-      // Processed Share was Accepted
-      if (shareValid) {
-        const address = shareData.addrPrimary.split('.')[0];
-        const text = _this.text.stratumSharesText1(shareData.difficulty, shareData.shareDiff, address, shareData.ip);
-        _this.logger['log']('Pool', _this.config.name, [text]);
-
-      // Processed Share was Rejected
-      } else {
-        const address = shareData.addrPrimary.split('.')[0];
-        const text = _this.text.stratumSharesText2(shareData.error, address, shareData.ip);
-        _this.logger['error']('Pool', _this.config.name, [text]);
-      }
+      _this.handleShareProcessed(shareData, shareValid);
     });
   };
 

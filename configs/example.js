@@ -12,6 +12,10 @@ const config = {};
 config.enabled = true;
 config.settings = {};
 
+// Stratum Configuration
+config.stratum = {};
+config.stratum.lean = false;
+
 // Banning Configuration
 config.settings.banning = {};
 config.settings.banning.banLength = 600000; // ms;
