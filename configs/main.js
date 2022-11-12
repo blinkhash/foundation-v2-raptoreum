@@ -24,9 +24,9 @@ config.clustering.forks = 'auto';
 
 // TLS Configuration
 config.tls = {};
-config.tls.ca = '';
-config.tls.key = '';
-config.tls.cert = '';
+config.tls.ca = 'rootCA.crt';
+config.tls.key = 'server.key';
+config.tls.cert = 'server.crt';
 
 // Export Configuration
 module.exports = config;
