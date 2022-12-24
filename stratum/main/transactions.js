@@ -147,7 +147,6 @@ const Transactions = function(config, rpcData) {
       ]));
     }
 
-
     // Handle Recipient Transactions
     let recipientTotal = 0;
     _this.config.primary.recipients.forEach((recipient) => {
