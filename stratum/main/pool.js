@@ -1340,7 +1340,6 @@ const Pool = function(config, configMain, callback) {
       _this.emitLog('log', false, _this.text.stratumClientText1(client.addrPrimary, diff));
     });
     client.on('client.difficulty.updated', (diff) => {
-      // _this.difficulty[client.socket.localPort].clients[client.id] = [];
       _this.emitLog('log', false, _this.text.stratumClientText2(client.addrPrimary, diff));
     });
 

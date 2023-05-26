@@ -205,8 +205,8 @@ const Client = function(config, socket, id, authorizeFn) {
 
     // Update Client Difficulty
     if (_this.pendingDifficulty != null) {
-      const targetDifficulty = diffIndex != 0 ? _this.pendingDifficulty * diffIndex : _this.pendingDifficulty; 
-      const result = _this.broadcastDifficulty(targetDifficulty);
+      // const targetDifficulty = diffIndex != 0 ? _this.pendingDifficulty * diffIndex : _this.pendingDifficulty; 
+      const result = _this.broadcastDifficulty(_this.pendingDifficulty);
       if (result) _this.emit('client.difficulty.updated', _this.difficulty);
       _this.pendingDifficulty = null;
     }
