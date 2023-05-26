@@ -205,7 +205,6 @@ const Client = function(config, socket, id, authorizeFn) {
 
     // Update Client Difficulty
     if (_this.pendingDifficulty != null || (diffRatio && diffRatio != 1)) {
-
       let difficulty;
       let minDifficulty;
       let maxDifficulty;
@@ -220,10 +219,11 @@ const Client = function(config, socket, id, authorizeFn) {
       });
 
       // Set New Difficulty
-      if (_this.pendingDifficulty != null)
+      if (_this.pendingDifficulty != null) {
         difficulty = _this.pendingDifficulty * diffIndex;
-      else
+      } else {
         difficulty = _this.difficulty * diffRatio;
+      }
 
       // Check Limits
       if (minDifficulty > difficulty) {

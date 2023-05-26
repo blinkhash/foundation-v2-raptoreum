@@ -17,13 +17,13 @@ const Difficulty = function(config) {
 
   // Difficulty Saved Values
   this.lastRetargetTime = null;
-  this.lastSavedTime = null;
+  // this.lastSavedTime = null;
 
   // Get New Difficulty for Updates
   this.setDifficulty = function(client) {
 
     // Check that Client is Recorded
-    if (!(Object.keys(_this.clients).includes(client.id))) return;
+    if (!(Object.keys(_this.clients).includes(client.id))) return null;
 
     const timestamps = _this.clients[client.id].timestamps;
     const difficulties = _this.clients[client.id].difficulties;
@@ -35,10 +35,12 @@ const Difficulty = function(config) {
     // Process Queue
     const difficultySum = difficulties.reduce((a, b) => a + b, 0);
     const queueInterval = timestamps[timestamps.length - 1] - timestamps[0];
-    const targetDifficulty =  _this.config.targetTime / queueInterval * difficultySum;
+    const targetDiff =  _this.config.targetTime / queueInterval * difficultySum;
+    if (targetDiff == 1) return null;
 
     // Return New Difficulty
-    return utils.roundTo(targetDifficulty, 4) || null;
+    const diffCorrection = targetDiff / client.difficulty || 1;
+    return diffCorrection != 1 ? diffCorrection : null;
   };
 
   // Handle Individual Clients
@@ -53,7 +55,7 @@ const Difficulty = function(config) {
         _this.clients[client.id] = { difficulties: [], timestamps: [] };
         _this.clients[client.id].timestamps.push(curTime);
         _this.lastRetargetTime = curTime - _this.config.retargetTime / 2;
-        _this.lastSavedTime = curTime;
+        // _this.lastSavedTime = curTime;
       }
     });
 
@@ -78,11 +80,11 @@ const Difficulty = function(config) {
 
     // Calculate Difference Between Desired vs. Average Time
     if (curTime - _this.lastRetargetTime < _this.config.retargetTime) return;
-    const newDifficulty = _this.setDifficulty(client);
-    const diffCorrection = newDifficulty / client.difficulty || 1; 
+    const diffCorrection = _this.setDifficulty(client);
 
     // Difficulty Will Be Updated
-    if (newDifficulty != null && diffCorrection != 1 && (diffCorrection > _this.maxBoundary || diffCorrection < _this.minBoundary)) {
+    if (diffCorrection != null && (diffCorrection > _this.maxBoundary || diffCorrection < _this.minBoundary)) {
+      const newDifficulty = utils.roundTo(client.difficulty * diffCorrection, 4);
       _this.emit('client.difficulty.new', client, newDifficulty);
     };
 
