@@ -61,6 +61,12 @@ describe('Test manager functionality', () => {
 
   test('Test template updates given updated blockTemplate', () => {
     const manager = new Manager(configCopy, configMainCopy);
+    const response1 = manager.getCNIndex('8719aefb83ef6583bd4c808bbe7d49b629a60b375fc6e36bee039530bc7727a4');
+    expect(response1).toBe(1.2);
+  });
+
+  test('Test template updates given updated blockTemplate', () => {
+    const manager = new Manager(configCopy, configMainCopy);
     const response1 = manager.handleTemplate(rpcDataCopy);
     expect(response1).toBe(true);
   });

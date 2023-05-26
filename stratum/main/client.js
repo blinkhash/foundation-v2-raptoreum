@@ -79,6 +79,9 @@ const Client = function(config, socket, id, authorizeFn) {
     switch (message.method) {
 
     // Supported Stratum Messages
+    case 'keepalived':
+      _this.handleKeepalived(message);
+      break;
     case 'mining.subscribe':
       _this.handleSubscribe(message);
       break;
@@ -293,6 +296,22 @@ const Client = function(config, socket, id, authorizeFn) {
     // Update Version Mask
     _this.asicboost = false;
     _this.versionMask = '00000000';
+  };
+
+  // Manage Stratum Keepalived
+  this.handleKeepalived = function(message) {
+
+    // Broadcast Keepalived Response
+    _this.sendJson({
+      id: message.id,
+      result: {
+        "status": "KEEPALIVED"
+      },
+      error: null,
+    });
+
+    // Keep Worker Connection Alive
+    _this.activity = Date.now();
   };
 
   // Manage Stratum Multi-Versions

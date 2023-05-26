@@ -1,4 +1,5 @@
 const Client = require('../main/client');
+const MockDate = require('mockdate');
 const config = require('../../configs/example');
 const events = require('events');
 
@@ -372,6 +373,18 @@ describe('Test client functionality', () => {
     const client = new Client(configCopy, socket, 0, () => {});
     client.on('client.mining.unknown', () => done());
     client.validateMessages({ id: null, method: 'mining.unknown' });
+  });
+
+  test('Test client message validation [17]', (done) => {
+    const socket = mockSocket();
+    MockDate.set(1634742080841);
+    const client = new Client(configCopy, socket, 0, () => {});
+    client.socket.on('log', (text) => {
+      expect(text).toStrictEqual('{"id":null,"result":{"status":"KEEPALIVED"},"error":null}\n');
+      done();
+    });
+    expect(client.activity).toBe(1634742080841);
+    client.validateMessages({ id: null, method: 'keepalived' });
   });
 
   test('Test client difficulty updates', (done) => {

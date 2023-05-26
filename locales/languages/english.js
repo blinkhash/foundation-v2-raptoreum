@@ -41,7 +41,7 @@ exports.loaderRecipientsText2 = () => 'The recipient percentage is greater than 
 exports.stratumBlocksText1 = () => 'The block was rejected by the network';
 exports.stratumBlocksText2 = (host, error) => `RPC error with primary daemon instance (${ host }) when submitting block: ${ error }`;
 exports.stratumBlocksText3 = (host) => `Primary daemon instance (${ host }) rejected a supposedly valid block`;
-exports.stratumBlocksText4 = (coin, height) => `Submitted a primary block (${ coin }:${ height }) successfully to ${ coin }'s daemon instance(s)`;
+exports.stratumBlocksText4 = (coin, height, miner) => `Submitted a primary block (${ coin }:${ height }) found by ${ miner }, successfully to ${ coin }'s daemon instance(s)`;
 exports.stratumBlocksText5 = (host, error) => `RPC error with auxiliary daemon instance (${ host }) when submitting block: ${ error }`;
 exports.stratumBlocksText6 = (host) => `Auxiliary daemon instance (${ host }) rejected a supposedly valid block`;
 exports.stratumBlocksText7 = (coin, height) => `Submitted an auxiliary block (${ coin }:${ height }) successfully to ${ coin }'s daemon instance(s)`;

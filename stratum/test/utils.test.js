@@ -125,6 +125,21 @@ describe('Test utility functionality', () => {
     expect(utils.getBitcoinOPCodes('OP_DEFAULT')).toBe(0);
   });
 
+  test('Test implemented getCryptoNightRotation', () => {
+    const hash = '7afbcc3b242749f17ac74c5748039fe4e4ed9196b88df76a46a778f8e6cd2611';
+    const expected = [1, 0, 2];
+    expect(utils.getCryptoNightRotation(hash)).toStrictEqual(expected);
+  });
+
+  test('Test implemented getDifficultyIndex', () => {
+    const rotation = [1, 0, 2];
+    const cnRotations = {
+      DarkDarkliteFast: 123, 
+    };
+    const expected = 123;
+    expect(utils.getDifficultyIndex(rotation, cnRotations)).toStrictEqual(expected);
+  });
+
   test('Test implemented getEncodingLength', () => {
     expect(utils.getEncodingLength(0x01)).toBe(1);
     expect(utils.getEncodingLength(0xfa)).toBe(2);
@@ -235,6 +250,11 @@ describe('Test utility functionality', () => {
   test('Test implemented reverseHex', () => {
     const buffer = utils.reverseHex('9719aefb83ef6583bd4c808bbe7d49b629a60b375fc6e36bee039530bc7727e2', 'hex');
     expect(buffer).toStrictEqual('e22777bc309503ee6be3c65f370ba629b6497dbe8b804cbd8365ef83fbae1997');
+  });
+
+  test('Test implemented roundTo', () => {
+    expect(utils.roundTo(1.1234)).toStrictEqual(1);
+    expect(utils.roundTo(1.1234, 2)).toStrictEqual(1.12);
   });
 
   test('Test implemented serializeNumber', () => {

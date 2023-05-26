@@ -224,7 +224,7 @@ const Pool = function(config, configMain, callback) {
     _this.submitPrimary(shareData.hex, (error, response) => {
       if (error) _this.emitLog('error', false, response);
       else {
-        _this.emitLog('special', false, _this.text.stratumBlocksText4(_this.config.primary.coin.name, shareData.height));
+        _this.emitLog('special', false, _this.text.stratumBlocksText4(_this.config.primary.coin.name, shareData.height, shareData.addrPrimary.split('.')[0]));
         _this.checkAccepted(_this.primary.daemon, shareData.hash, (accepted, transaction) => {
           shareData.transaction = transaction;
           callback(accepted, shareData);
@@ -522,7 +522,7 @@ const Pool = function(config, configMain, callback) {
   };
 
   // Send Primary Payments to Miners
-  this.handlePrimaryPayments = function(payments, callback) {
+  this.handlePrimaryPayments = function(payments, users, callback) {
 
     // Calculate Total Payment to Each Miner
     const amounts = {};
@@ -530,12 +530,23 @@ const Pool = function(config, configMain, callback) {
       amounts[address] = utils.roundTo(payments[address], 8);
     });
 
-    // Validate Amounts >= Minimum
     const balances = {};
     Object.keys(amounts).forEach((address) => {
+
+      // Validate Amounts >= Minimum
       if (amounts[address] < _this.config.primary.payments.minPayment ||
         !_this.primary.payments.enabled) {
         balances[address] = amounts[address];
+        delete amounts[address];
+      }
+
+      // Validate Amounts >= Payout Limit
+      if (address in users && users[address] > amounts[address]) {
+        if (balances[address] > 0) {
+          balances[address] += amounts[address];
+        } else {
+          balances[address] = amounts[address];
+        }
         delete amounts[address];
       }
     });
@@ -898,7 +909,7 @@ const Pool = function(config, configMain, callback) {
   };
 
   // Send Auxiliary Payments to Miners
-  this.handleAuxiliaryPayments = function(payments, callback) {
+  this.handleAuxiliaryPayments = function(payments, users, callback) {
 
     // Calculate Total Payment to Each Miner
     const amounts = {};
@@ -906,12 +917,23 @@ const Pool = function(config, configMain, callback) {
       amounts[address] = utils.roundTo(payments[address], 8);
     });
 
-    // Validate Amounts >= Minimum
     const balances = {};
     Object.keys(amounts).forEach((address) => {
+
+      // Validate Amounts >= Minimum
       if (amounts[address] < _this.config.auxiliary.payments.minPayment ||
         !_this.auxiliary.payments.enabled) {
         balances[address] = amounts[address];
+        delete amounts[address];
+      }
+
+      // Validate Amounts >= Payout Limit
+      if (address in users && users[address] > amounts[address]) {
+        if (balances[address] > 0) {
+          balances[address] += amounts[address];
+        } else {
+          balances[address] = amounts[address];
+        }
         delete amounts[address];
       }
     });
@@ -1158,8 +1180,10 @@ const Pool = function(config, configMain, callback) {
     });
 
     // Handle New Block Templates
-    _this.manager.on('manager.block.new', (template) => {
+    _this.manager.on('manager.block.new', (template, diffIndex) => {
 
+      console.log('new index passed to pool: ' + diffIndex);
+      
       // Process Primary Network Data
       _this.checkNetwork(_this.primary.daemon, 'primary', (networkData) => {
         _this.emit('pool.network', networkData);
@@ -1364,8 +1388,22 @@ const Pool = function(config, configMain, callback) {
       const validPorts = _this.config.ports
         .filter((port) => port.port === client.socket.localPort)
         .filter((port) => typeof port.difficulty.initial !== 'undefined');
-      if (validPorts.length >= 1) client.broadcastDifficulty(validPorts[0].difficulty.initial);
-      else client.broadcastDifficulty(8);
+      if (validPorts.length >= 1) {
+        
+        // Has the server recently started?
+        const uptime = process.uptime();
+        let multiplier = 1;
+        if (uptime <= 60)
+          multiplier = 3;
+        else if (uptime > 60 && uptime <= 120)
+          multiplier = 2.5;
+        else if (uptime > 120 && uptime <= 180)
+          multiplier = 2;
+        else if (uptime > 180 && uptime <= 240)
+          multiplier = 1.5;
+
+        client.broadcastDifficulty(validPorts[0].difficulty.initial * multiplier);
+      } else client.broadcastDifficulty(0.2);
 
       // Send Mining Job Parameters to Miner
       const jobParams = _this.manager.currentJob.handleParameters(true);
