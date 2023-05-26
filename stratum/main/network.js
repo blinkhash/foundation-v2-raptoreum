@@ -42,13 +42,13 @@ const Network = function(config, configMain, authorizeFn) {
   };
 
   // Handle Broadcasting New Jobs to Clients
-  this.broadcastMiningJobs = function(template, cleanJobs, diffIndex) {
+  this.broadcastMiningJobs = function(template, cleanJobs, diffIndex, diffRatio) {
 
     // Send New Jobs to Clients
     Object.keys(_this.clients).forEach((id) => {
       const client = _this.clients[id];
       const parameters = template.handleParameters(cleanJobs);
-      client.broadcastMiningJob(parameters, diffIndex);
+      client.broadcastMiningJob(parameters, diffIndex, diffRatio);
     });
 
     // Handle Resetting Broadcast Timeout

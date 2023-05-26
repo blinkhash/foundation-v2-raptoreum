@@ -1180,7 +1180,7 @@ const Pool = function(config, configMain, callback) {
     });
 
     // Handle New Block Templates
-    _this.manager.on('manager.block.new', (template, diffIndex) => {
+    _this.manager.on('manager.block.new', (template, diffIndex, diffRatio) => {
 
       // Process Primary Network Data
       _this.checkNetwork(_this.primary.daemon, 'primary', (networkData) => {
@@ -1195,14 +1195,14 @@ const Pool = function(config, configMain, callback) {
       }
 
       // Broadcast New Mining Jobs to Clients
-      if (_this.network) _this.network.broadcastMiningJobs(template, true, diffIndex);
+      if (_this.network) _this.network.broadcastMiningJobs(template, true, diffIndex, diffRatio);
     });
 
     // Handle Updated Block Templates
     _this.manager.on('manager.block.updated', (template) => {
 
       // Broadcast New Mining Jobs to Clients
-      if (_this.network) _this.network.broadcastMiningJobs(template, false, 1);
+      if (_this.network) _this.network.broadcastMiningJobs(template, false, 1, 1);
     });
 
     // Indicate Manager is Setup Successfully

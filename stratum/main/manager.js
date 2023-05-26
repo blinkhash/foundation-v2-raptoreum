@@ -33,6 +33,12 @@ const Manager = function(config, configMain) {
     return utils.getDifficultyIndex(rotation, _this.config.rotations) || 1;
   };
 
+  // Calculate CryptoNight Rotation Index Ratio
+  this.handleCNRotation = function(currentHash, newHash) {
+    if (currentHash.length != 64 || newHash.length != 64) return 1;
+    return Math.round(100 * _this.getCNIndex(newHash) / _this.getCNIndex(currentHash)) / 100 || 1;
+  };
+
   // Check if New Block is Processed
   this.handleUpdates = function(rpcData) {
 
@@ -53,6 +59,7 @@ const Manager = function(config, configMain) {
   // Check if New Block is Processed
   this.handleTemplate = function(rpcData, newBlock, newBroadcast) {
     let diffIndex = 1;
+    let diffRatio = 1;
 
     // If Current Job !== Previous Job
     let isNewBlock = _this.currentJob === null;
@@ -72,12 +79,15 @@ const Manager = function(config, configMain) {
       _this.extraNoncePlaceholder);
 
     // Detect CryptoNight rotation
-    if (_this.config.rotations.enabled && tmpTemplate.rpcData.previousblockhash)
+    if (_this.config.rotations.enabled && tmpTemplate.rpcData.previousblockhash) {
       diffIndex = _this.getCNIndex(tmpTemplate.rpcData.previousblockhash);
+      if (_this.currentJob && (tmpTemplate.rpcData.height > _this.currentJob.rpcData.height))
+        diffRatio = _this.handleCNRotation(_this.currentJob.rpcData.previousblockhash, tmpTemplate.rpcData.previousblockhash);
+    }
 
     // Update Current Template
     _this.currentJob = tmpTemplate;
-    _this.emit('manager.block.new', tmpTemplate, diffIndex);
+    _this.emit('manager.block.new', tmpTemplate, diffIndex, diffRatio);
     _this.validJobs[tmpTemplate.jobId] = tmpTemplate;
     return true;
   };

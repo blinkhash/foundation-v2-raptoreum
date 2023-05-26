@@ -192,7 +192,7 @@ const Client = function(config, socket, id, authorizeFn) {
   };
 
   // Broadcast Mining Job to Stratum Client
-  this.broadcastMiningJob = function(parameters, diffIndex) {
+  this.broadcastMiningJob = function(parameters, diffIndex, diffRatio) {
 
     // Check Processed Shares
     const activityAgo = Date.now() - _this.activity;
@@ -204,8 +204,36 @@ const Client = function(config, socket, id, authorizeFn) {
     }
 
     // Update Client Difficulty
-    if (_this.pendingDifficulty != null) {
-      // const targetDifficulty = diffIndex != 0 ? _this.pendingDifficulty * diffIndex : _this.pendingDifficulty; 
+    if (_this.pendingDifficulty != null || (diffRatio && diffRatio != 1)) {
+
+      let difficulty;
+      let minDifficulty;
+      let maxDifficulty;
+      
+      // Get Difficulty Limits from Port Configuration
+      const port = _this.socket._sockname.port;
+      _this.config.ports.forEach(entry => {
+        if (entry.enabled && entry.port == port) {
+          minDifficulty = entry.difficulty.minimum;
+          maxDifficulty = entry.difficulty.maximum;
+        };
+      });
+
+      // Set New Difficulty
+      if (_this.pendingDifficulty != null)
+        difficulty = _this.pendingDifficulty * diffIndex;
+      else
+        difficulty = _this.difficulty * diffRatio;
+
+      // Check Limits
+      if (minDifficulty > difficulty) {
+        _this.pendingDifficulty = minDifficulty;
+      } else if (maxDifficulty < difficulty) {
+        _this.pendingDifficulty = maxDifficulty;
+      } else {
+        _this.pendingDifficulty = difficulty;
+      };
+
       const result = _this.broadcastDifficulty(_this.pendingDifficulty);
       if (result) _this.emit('client.difficulty.updated', _this.difficulty);
       _this.pendingDifficulty = null;

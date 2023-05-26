@@ -29,31 +29,16 @@ const Difficulty = function(config) {
     const difficulties = _this.clients[client.id].difficulties;
     const queueLength = difficulties.length;
 
-    // Configure Recent Queue Parameters
-    const recentWeight = 0.2;
-    const recentRatio = 0.1;
-    const recentCap = 20;
-    const recentRatioIndex = Math.floor(queueLength * (1 - recentRatio)) - 1;
-    const recentCapIndex = queueLength - recentCap - 1;
-    const recentIndex = Math.max(recentRatioIndex, recentCapIndex, 0);
-
     // Check that Queue has Sufficient Entries
     if (queueLength < 2) return null;
 
-    // Process Historical Queue
-    const historicalDiffSum = difficulties.reduce((a, b) => a + b, 0);
-    const historicalQueueInterval = timestamps[timestamps.length - 1] - timestamps[0];
-    const historicalDifficulty =  _this.config.targetTime / historicalQueueInterval * historicalDiffSum;
-    
-    // Process Recent Queue
-    const recentDifficulties = difficulties.slice(recentIndex);
-    const recentDiffSum = recentDifficulties.reduce((a, b) => a + b, 0);
-    const recentQueueInterval = timestamps[timestamps.length - 1] - timestamps[recentIndex];
-    const recentDifficulty = _this.config.targetTime / recentQueueInterval * recentDiffSum;
+    // Process Queue
+    const difficultySum = difficulties.reduce((a, b) => a + b, 0);
+    const queueInterval = timestamps[timestamps.length - 1] - timestamps[0];
+    const targetDifficulty =  _this.config.targetTime / queueInterval * difficultySum;
 
-    // Calculate and Return New Difficulty Average
-    const newDifficulty = utils.roundTo(historicalDifficulty * (1 - recentWeight) + recentDifficulty * recentWeight, 4);
-    return newDifficulty || null;
+    // Return New Difficulty
+    return utils.roundTo(targetDifficulty, 4) || null;
   };
 
   // Handle Individual Clients
