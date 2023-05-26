@@ -75,8 +75,6 @@ const Manager = function(config, configMain) {
     if (_this.config.rotations.enabled && tmpTemplate.rpcData.previousblockhash)
       diffIndex = _this.getCNIndex(tmpTemplate.rpcData.previousblockhash);
 
-    console.log('new index: ' + diffIndex);
-    
     // Update Current Template
     _this.currentJob = tmpTemplate;
     _this.emit('manager.block.new', tmpTemplate, diffIndex);

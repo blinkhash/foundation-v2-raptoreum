@@ -1182,8 +1182,6 @@ const Pool = function(config, configMain, callback) {
     // Handle New Block Templates
     _this.manager.on('manager.block.new', (template, diffIndex) => {
 
-      console.log('new index passed to pool: ' + diffIndex);
-      
       // Process Primary Network Data
       _this.checkNetwork(_this.primary.daemon, 'primary', (networkData) => {
         _this.emit('pool.network', networkData);
@@ -1197,14 +1195,14 @@ const Pool = function(config, configMain, callback) {
       }
 
       // Broadcast New Mining Jobs to Clients
-      if (_this.network) _this.network.broadcastMiningJobs(template, true);
+      if (_this.network) _this.network.broadcastMiningJobs(template, true, diffIndex);
     });
 
     // Handle Updated Block Templates
     _this.manager.on('manager.block.updated', (template) => {
 
       // Broadcast New Mining Jobs to Clients
-      if (_this.network) _this.network.broadcastMiningJobs(template, false);
+      if (_this.network) _this.network.broadcastMiningJobs(template, false, 1);
     });
 
     // Indicate Manager is Setup Successfully
@@ -1342,7 +1340,7 @@ const Pool = function(config, configMain, callback) {
       _this.emitLog('log', false, _this.text.stratumClientText1(client.addrPrimary, diff));
     });
     client.on('client.difficulty.updated', (diff) => {
-      _this.difficulty[client.socket.localPort].clients[client.id] = [];
+      // _this.difficulty[client.socket.localPort].clients[client.id] = [];
       _this.emitLog('log', false, _this.text.stratumClientText2(client.addrPrimary, diff));
     });
 
@@ -1380,7 +1378,12 @@ const Pool = function(config, configMain, callback) {
     });
 
     // Handle Client Subscription Events
-    client.on('client.subscription', (params, callback) => {
+    client.on('client.subscription', (message, callback) => {
+
+      // Log Miner Info
+      if (message.params && message.params.length > 0)
+        _this.emitLog('log', true, `Worker with ${ message.params[0] } subscribed`);
+
       const extraNonce = _this.manager.extraNonceCounter.next();
       callback(null, extraNonce, _this.manager.extraNonce2Size);
 

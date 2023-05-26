@@ -192,7 +192,7 @@ const Client = function(config, socket, id, authorizeFn) {
   };
 
   // Broadcast Mining Job to Stratum Client
-  this.broadcastMiningJob = function(parameters) {
+  this.broadcastMiningJob = function(parameters, diffIndex) {
 
     // Check Processed Shares
     const activityAgo = Date.now() - _this.activity;
@@ -205,7 +205,8 @@ const Client = function(config, socket, id, authorizeFn) {
 
     // Update Client Difficulty
     if (_this.pendingDifficulty != null) {
-      const result = _this.broadcastDifficulty(_this.pendingDifficulty);
+      const targetDifficulty = diffIndex != 0 ? _this.pendingDifficulty * diffIndex : _this.pendingDifficulty; 
+      const result = _this.broadcastDifficulty(targetDifficulty);
       if (result) _this.emit('client.difficulty.updated', _this.difficulty);
       _this.pendingDifficulty = null;
     }
@@ -222,7 +223,7 @@ const Client = function(config, socket, id, authorizeFn) {
   this.handleSubscribe = function(message) {
 
     // Emit Subscription Event
-    _this.emit('client.subscription', {}, (error, extraNonce1, extraNonce2Size) => {
+    _this.emit('client.subscription', message, (error, extraNonce1, extraNonce2Size) => {
       if (error) {
         _this.sendJson({ id: message.id, result: null, error: error });
         return;
