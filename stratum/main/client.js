@@ -79,9 +79,9 @@ const Client = function(config, socket, id, authorizeFn) {
     switch (message.method) {
 
     // Supported Stratum Messages
-    case 'keepalived':
-      _this.handleKeepalived(message);
-      break;
+    // case 'keepalived':
+    //   _this.handleKeepalived(message);
+    //   break;
     case 'mining.subscribe':
       _this.handleSubscribe(message);
       break;
@@ -192,7 +192,8 @@ const Client = function(config, socket, id, authorizeFn) {
   };
 
   // Broadcast Mining Job to Stratum Client
-  this.broadcastMiningJob = function(parameters, diffIndex, diffRatio) {
+  // this.broadcastMiningJob = function(parameters, diffIndex, diffRatio) {
+  this.broadcastMiningJob = function(parameters) {
 
     // Check Processed Shares
     const activityAgo = Date.now() - _this.activity;
@@ -204,35 +205,36 @@ const Client = function(config, socket, id, authorizeFn) {
     }
 
     // Update Client Difficulty
-    if (_this.pendingDifficulty != null || (diffRatio && diffRatio != 1)) {
-      let difficulty;
-      let minDifficulty;
-      let maxDifficulty;
+    // if (_this.pendingDifficulty != null || (diffRatio && diffRatio != 1)) {
+    if (_this.pendingDifficulty != null) {
+      // let difficulty;
+      // let minDifficulty;
+      // let maxDifficulty;
       
       // Get Difficulty Limits from Port Configuration
-      const port = _this.socket._sockname.port;
-      _this.config.ports.forEach(entry => {
-        if (entry.enabled && entry.port == port) {
-          minDifficulty = entry.difficulty.minimum;
-          maxDifficulty = entry.difficulty.maximum;
-        };
-      });
+      // const port = _this.socket._sockname.port;
+      // _this.config.ports.forEach(entry => {
+      //   if (entry.enabled && entry.port == port) {
+      //     minDifficulty = entry.difficulty.minimum;
+      //     maxDifficulty = entry.difficulty.maximum;
+      //   };
+      // });
 
       // Set New Difficulty
-      if (_this.pendingDifficulty != null) {
-        difficulty = _this.pendingDifficulty * diffIndex;
-      } else {
-        difficulty = _this.difficulty * diffRatio;
-      }
+      // if (_this.pendingDifficulty != null) {
+      //   difficulty = _this.pendingDifficulty * diffIndex;
+      // } else {
+      //   difficulty = _this.difficulty * diffRatio;
+      // }
 
       // Check Limits
-      if (minDifficulty > difficulty) {
-        _this.pendingDifficulty = minDifficulty;
-      } else if (maxDifficulty < difficulty) {
-        _this.pendingDifficulty = maxDifficulty;
-      } else {
-        _this.pendingDifficulty = difficulty;
-      };
+      // if (minDifficulty > difficulty) {
+      //   _this.pendingDifficulty = minDifficulty;
+      // } else if (maxDifficulty < difficulty) {
+      //   _this.pendingDifficulty = maxDifficulty;
+      // } else {
+      //   _this.pendingDifficulty = difficulty;
+      // };
 
       const result = _this.broadcastDifficulty(_this.pendingDifficulty);
       if (result) _this.emit('client.difficulty.updated', _this.difficulty);
@@ -251,7 +253,8 @@ const Client = function(config, socket, id, authorizeFn) {
   this.handleSubscribe = function(message) {
 
     // Emit Subscription Event
-    _this.emit('client.subscription', message, (error, extraNonce1, extraNonce2Size) => {
+    // _this.emit('client.subscription', message, (error, extraNonce1, extraNonce2Size) => {
+    _this.emit('client.subscription', {}, (error, extraNonce1, extraNonce2Size) => {
       if (error) {
         _this.sendJson({ id: message.id, result: null, error: error });
         return;
@@ -328,20 +331,20 @@ const Client = function(config, socket, id, authorizeFn) {
   };
 
   // Manage Stratum Keepalived
-  this.handleKeepalived = function(message) {
+  // this.handleKeepalived = function(message) {
 
-    // Broadcast Keepalived Response
-    _this.sendJson({
-      id: message.id,
-      result: {
-        "status": "KEEPALIVED"
-      },
-      error: null,
-    });
+  //   // Broadcast Keepalived Response
+  //   _this.sendJson({
+  //     id: message.id,
+  //     result: {
+  //       "status": "KEEPALIVED"
+  //     },
+  //     error: null,
+  //   });
 
-    // Keep Worker Connection Alive
-    _this.activity = Date.now();
-  };
+  //   // Keep Worker Connection Alive
+  //   _this.activity = Date.now();
+  // };
 
   // Manage Stratum Multi-Versions
   this.handleMultiVersion = function() {

@@ -84,7 +84,15 @@ const Difficulty = function(config) {
 
     // Difficulty Will Be Updated
     if (diffCorrection != null && (diffCorrection > _this.maxBoundary || diffCorrection < _this.minBoundary)) {
-      const newDifficulty = utils.roundTo(client.difficulty * diffCorrection, 4);
+      let newDifficulty = utils.roundTo(client.difficulty * diffCorrection, 4);
+
+      // Check Limits
+      if (_this.config.minimum > newDifficulty) {
+        newDifficulty = _this.config.minimum;
+      } else if (_this.config.maximum < newDifficulty) {
+        newDifficulty = _this.config.maximum;
+      } 
+
       _this.emit('client.difficulty.new', client, newDifficulty);
     };
 
