@@ -192,8 +192,8 @@ const Client = function(config, socket, id, authorizeFn) {
   };
 
   // Broadcast Mining Job to Stratum Client
-  // this.broadcastMiningJob = function(parameters, diffIndex, diffRatio) {
-  this.broadcastMiningJob = function(parameters) {
+  this.broadcastMiningJob = function(parameters, diffIndex, diffRatio) {
+  // this.broadcastMiningJob = function(parameters) {
 
     // Check Processed Shares
     const activityAgo = Date.now() - _this.activity;

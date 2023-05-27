@@ -11,23 +11,25 @@ const Difficulty = function(config) {
   this.clients = {};
 
   // Difficulty Variables
-  this.maxSize = 60 / _this.config.targetTime * 600;
+  this.maxSize = 60 / _this.config.targetTime * 5;
   this.maxBoundary = 1 + _this.config.variance;
   this.minBoundary = 1 - _this.config.variance;
 
   // Difficulty Saved Values
   this.lastRetargetTime = null;
-  // this.lastSavedTime = null;
 
-  // Get New Difficulty for Updates
-  this.setDifficulty = function(client) {
+  // Get New Difficulty Correction for Updates
+  this.getDiffCorrection = function(client) {
 
     // Check that Client is Recorded
     if (!(Object.keys(_this.clients).includes(client.id))) return null;
 
+    // Setup Queue
     const timestamps = _this.clients[client.id].timestamps;
     const difficulties = _this.clients[client.id].difficulties;
     const queueLength = difficulties.length;
+
+    // console.log('queue length: ' + queueLength)
 
     // Check that Queue has Sufficient Entries
     if (queueLength < 2) return null;
@@ -35,8 +37,11 @@ const Difficulty = function(config) {
     // Process Queue
     const difficultySum = difficulties.reduce((a, b) => a + b, 0);
     const queueInterval = timestamps[timestamps.length - 1] - timestamps[0];
-    const targetDiff =  _this.config.targetTime / queueInterval * difficultySum;
-    if (targetDiff == 1) return null;
+    const targetDiff =  queueInterval != 0 ? _this.config.targetTime * difficultySum / queueInterval : client.difficulty;
+
+    // console.log('diff sum: ' + difficultySum)
+    // console.log('interval: ' + queueInterval)
+    
 
     // Return New Difficulty
     const diffCorrection = targetDiff / client.difficulty || 1;
@@ -55,15 +60,16 @@ const Difficulty = function(config) {
         _this.clients[client.id] = { difficulties: [], timestamps: [] };
         _this.clients[client.id].timestamps.push(curTime);
         _this.lastRetargetTime = curTime - _this.config.retargetTime / 2;
-        // _this.lastSavedTime = curTime;
       }
     });
 
     // Client Submission
+    // client.on('client.submit', () => _this.handleDifficulty(client, 1, 1));   ????
     client.on('client.submit', () => _this.handleDifficulty(client));
   };
 
   // Handle Difficulty Updates
+  // this.handleDifficulty = function(client, diffIndex, diffRatio) { ?????
   this.handleDifficulty = function(client) {
 
     // Update Current Time/Values
@@ -79,20 +85,28 @@ const Difficulty = function(config) {
     };
 
     // Calculate Difference Between Desired vs. Average Time
-    if (curTime - _this.lastRetargetTime < _this.config.retargetTime) return;
-    const diffCorrection = _this.setDifficulty(client);
+    if ((curTime - _this.lastRetargetTime) < _this.config.retargetTime) return;
+    const diffCorrection = _this.getDiffCorrection(client);
+    // console.log('correction: ' + diffCorrection)
 
     // Difficulty Will Be Updated
     if (diffCorrection != null && (diffCorrection > _this.maxBoundary || diffCorrection < _this.minBoundary)) {
-      let newDifficulty = utils.roundTo(client.difficulty * diffCorrection, 4);
+      let newDifficulty = client.difficulty * diffCorrection;
+
+      // console.log('new diff: ' + newDifficulty)
 
       // Check Limits
       if (_this.config.minimum > newDifficulty) {
+        // console.log('diff too low')
         newDifficulty = _this.config.minimum;
       } else if (_this.config.maximum < newDifficulty) {
+        // console.log('diff too high')
         newDifficulty = _this.config.maximum;
-      } 
+      } else {
+        newDifficulty = utils.roundTo(newDifficulty, 5);
+      }
 
+      // console.log('setting new diff: ' + newDifficulty)
       _this.emit('client.difficulty.new', client, newDifficulty);
     };
 

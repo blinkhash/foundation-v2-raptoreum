@@ -58,8 +58,8 @@ const Manager = function(config, configMain) {
 
   // Check if New Block is Processed
   this.handleTemplate = function(rpcData, newBlock, newBroadcast) {
-    // let diffIndex = 1;
-    // let diffRatio = 1;
+    let diffIndex = 1;
+    let diffRatio = 1;
 
     // If Current Job !== Previous Job
     let isNewBlock = _this.currentJob === null;
@@ -87,8 +87,11 @@ const Manager = function(config, configMain) {
 
     // Update Current Template
     _this.currentJob = tmpTemplate;
+
+    // console.log('indices: ' + diffIndex, diffRatio)
     // _this.emit('manager.block.new', tmpTemplate, diffIndex, diffRatio);
-    _this.emit('manager.block.new', tmpTemplate);
+    _this.emit('manager.block.new', tmpTemplate, 1, 1);
+    // _this.emit('manager.block.new', tmpTemplate);
     _this.validJobs[tmpTemplate.jobId] = tmpTemplate;
     return true;
   };

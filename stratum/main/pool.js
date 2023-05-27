@@ -1181,8 +1181,8 @@ const Pool = function(config, configMain, callback) {
     });
 
     // Handle New Block Templates
-    // _this.manager.on('manager.block.new', (template, diffIndex, diffRatio) => {
-    _this.manager.on('manager.block.new', (template) => {
+    _this.manager.on('manager.block.new', (template, diffIndex, diffRatio) => {
+    // _this.manager.on('manager.block.new', (template) => {
 
       // Process Primary Network Data
       _this.checkNetwork(_this.primary.daemon, 'primary', (networkData) => {
@@ -1197,16 +1197,16 @@ const Pool = function(config, configMain, callback) {
       }
 
       // Broadcast New Mining Jobs to Clients
-      // if (_this.network) _this.network.broadcastMiningJobs(template, true, diffIndex, diffRatio);
-      if (_this.network) _this.network.broadcastMiningJobs(template, true);
+      if (_this.network) _this.network.broadcastMiningJobs(template, true, diffIndex, diffRatio);
+      // if (_this.network) _this.network.broadcastMiningJobs(template, true);
     });
 
     // Handle Updated Block Templates
     _this.manager.on('manager.block.updated', (template) => {
 
       // Broadcast New Mining Jobs to Clients
-      // if (_this.network) _this.network.broadcastMiningJobs(template, false, 1, 1);
-      if (_this.network) _this.network.broadcastMiningJobs(template, false);
+      if (_this.network) _this.network.broadcastMiningJobs(template, false, 1, 1);
+      // if (_this.network) _this.network.broadcastMiningJobs(template, false);
     });
 
     // Indicate Manager is Setup Successfully
@@ -1442,7 +1442,8 @@ const Pool = function(config, configMain, callback) {
       _this.statistics.ports = _this.config.ports
         .filter((port) => port.enabled)
         .flatMap((port) => port.port);
-      _this.network.broadcastMiningJobs(_this.manager.currentJob, true);
+      _this.network.broadcastMiningJobs(_this.manager.currentJob, true, 1, 1);
+      // _this.network.broadcastMiningJobs(_this.manager.currentJob, true);
       _this.emitLog('debug', true, _this.text.checksMessageText11(), true);
       callback();
     });
