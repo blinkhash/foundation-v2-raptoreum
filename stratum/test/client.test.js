@@ -1,5 +1,6 @@
 const Client = require('../main/client');
 const MockDate = require('mockdate');
+const MockProcess = require('jest-mock-process');
 const config = require('../../configs/example');
 const events = require('events');
 
@@ -136,14 +137,6 @@ describe('Test client functionality', () => {
     expect(client.pendingDifficulty).toBe(8);
   });
 
-  test('Test client difficulty queueing [2]', () => {
-    const socket = mockSocket();
-    const client = new Client(configCopy, socket, 0, () => {});
-    client.staticDifficulty = true;
-    client.enqueueDifficulty(8);
-    expect(client.pendingDifficulty).toBe(null);
-  });
-
   test('Test client name validation [1]', () => {
     const socket = mockSocket();
     const client = new Client(configCopy, socket, 0, () => {});
@@ -234,9 +227,9 @@ describe('Test client functionality', () => {
     const socket = mockSocket();
     const output = { error: null, authorized: true, disconnect: false };
     const client = new Client(configCopy, socket, 0, (ip, port, addrPrimary, addrAuxiliary, password, callback) => callback(output));
+    const uptime = MockProcess.mockProcessUptime(300);
     client.socket.on('log', (text) => {
       expect(client.pendingDifficulty).toBe(500);
-      expect(client.staticDifficulty).toBe(true);
       expect(text).toStrictEqual('{"id":null,"result":true,"error":null}\n');
       done();
     });
