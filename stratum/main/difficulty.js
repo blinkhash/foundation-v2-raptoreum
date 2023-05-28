@@ -91,7 +91,10 @@ const Difficulty = function(config) {
 
     // Difficulty Will Be Updated
     if (diffCorrection != null && (diffCorrection > _this.maxBoundary || diffCorrection < _this.minBoundary)) {
+
+      // Assign New Difficulty
       let newDifficulty = client.difficulty * diffCorrection;
+
 
       // console.log('new diff: ' + newDifficulty)
 

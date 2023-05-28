@@ -1,4 +1,5 @@
 const events = require('events');
+const utils = require('./utils');
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -20,7 +21,6 @@ const Client = function(config, socket, id, authorizeFn) {
 
   // Difficulty Variables
   this.pendingDifficulty = null;
-  this.staticDifficulty = false;
 
   // Send JSON Messages
   this.sendJson = function() {
@@ -40,10 +40,8 @@ const Client = function(config, socket, id, authorizeFn) {
 
   // Push Updated Difficulty to Queue
   this.enqueueDifficulty = function(difficulty) {
-    if (!_this.staticDifficulty) {
-      _this.pendingDifficulty = difficulty;
-      _this.emit('client.difficulty.queued', difficulty);
-    }
+    _this.pendingDifficulty = difficulty;
+    _this.emit('client.difficulty.queued', difficulty);
   };
 
   // Validate Client Name
@@ -304,8 +302,8 @@ const Client = function(config, socket, id, authorizeFn) {
 
     // Check for Difficulty Flag
     if (clientFlags.difficulty) {
-      _this.enqueueDifficulty(clientFlags.difficulty);
-      _this.staticDifficulty = true;
+      const diffMultiplier = utils.getDifficultyMultiplier();
+      _this.enqueueDifficulty(clientFlags.difficulty * diffMultiplier);
     }
 
     // Check to Authorize Client

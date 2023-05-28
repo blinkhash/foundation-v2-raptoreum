@@ -335,6 +335,27 @@ exports.getSolutionSlice = function(nParam, kParam) {
   }
 };
 
+// Get Difficulty Multiplier After Server Start
+exports.getDifficultyMultiplier = function() {
+  const uptime = process.uptime();
+  const limit1 = 60;
+  const limit2 = 120
+  const limit3 = 180
+  const limit4 = 240
+
+  let multiplier = 1;
+  if (uptime <= limit1)
+    multiplier = 3;
+  else if (uptime > limit1 && uptime <= limit2)
+    multiplier = 2.5;
+  else if (uptime > limit2 && uptime <= limit3)
+    multiplier = 2;
+  else if (uptime > limit3 && uptime <= limit4)
+    multiplier = 1.5;
+  
+  return multiplier;
+};
+
 // Check if Input is Hex String
 exports.isHexString = function(s) {
   const check = String(s).toLowerCase();

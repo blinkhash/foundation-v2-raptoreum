@@ -1392,20 +1392,8 @@ const Pool = function(config, configMain, callback) {
         .filter((port) => port.port === client.socket.localPort)
         .filter((port) => typeof port.difficulty.initial !== 'undefined');
       if (validPorts.length >= 1) {
-        
-        // Has the server recently started?
-        const uptime = process.uptime();
-        let multiplier = 1;
-        if (uptime <= 60)
-          multiplier = 3;
-        else if (uptime > 60 && uptime <= 120)
-          multiplier = 2.5;
-        else if (uptime > 120 && uptime <= 180)
-          multiplier = 2;
-        else if (uptime > 180 && uptime <= 240)
-          multiplier = 1.5;
-
-        client.broadcastDifficulty(validPorts[0].difficulty.initial * multiplier);
+        const diffMultiplier = utils.getDifficultyMultiplier();
+        client.broadcastDifficulty(validPorts[0].difficulty.initial * diffMultiplier);
       } else client.broadcastDifficulty(0.2);
 
       // Send Mining Job Parameters to Miner
