@@ -86,3 +86,4 @@ exports.stratumTemplateText1 = (host, error) => `RPC error with primary daemon i
 exports.stratumTemplateText2 = (host, error) => `RPC error with auxiliary daemon instance (${ host }) when requesting an auxiliary template update: ${ error }`;
 exports.stratumWorkersText1 = (address, ip, port) => `Authorized worker: ${ address } (${ ip }:${ port })`;
 exports.stratumWorkersText2 = (address, ip, port) => `Unauthorized worker: ${ address } (${ ip }:${ port })`;
+exports.stratumWorkersText3 = (system) => `Subscribed worker with ${ system }`;

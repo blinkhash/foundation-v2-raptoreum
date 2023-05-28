@@ -1382,17 +1382,28 @@ const Pool = function(config, configMain, callback) {
 
       // Log Miner Info
       if (message.params && message.params.length > 0)
-        _this.emitLog('log', true, `Worker with ${ message.params[0] } subscribed`);
+        _this.emitLog('log', true, _this.text.stratumWorkersText3(message.params[0]));
 
       const extraNonce = _this.manager.extraNonceCounter.next();
       callback(null, extraNonce, _this.manager.extraNonce2Size);
+    });
 
-      // Send Correct Initial Difficulty to Miner
+    // Handle Client Authorization Events
+    client.on('client.authorization', (clientFlags) => {
+
+      // Get Correct Initial Port Difficulty
       const validPorts = _this.config.ports
         .filter((port) => port.port === client.socket.localPort)
         .filter((port) => typeof port.difficulty.initial !== 'undefined');
-      if (validPorts.length >= 1) {
+
+      // Check for Initial Difficulty Flag
+      if (clientFlags.difficulty) {
         const diffMultiplier = utils.getDifficultyMultiplier();
+        client.broadcastDifficulty(clientFlags.difficulty * diffMultiplier);
+      } else if (validPorts.length >= 1) {
+        const diffMultiplier = utils.getDifficultyMultiplier();
+
+        // initial diff
         client.broadcastDifficulty(validPorts[0].difficulty.initial * diffMultiplier);
       } else client.broadcastDifficulty(0.2);
 

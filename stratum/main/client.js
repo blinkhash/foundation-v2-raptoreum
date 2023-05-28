@@ -83,7 +83,7 @@ const Client = function(config, socket, id, authorizeFn) {
     case 'mining.subscribe':
       _this.handleSubscribe(message);
       break;
-    case 'mining.authorize':
+      case 'mining.authorize':
       _this.handleAuthorize(message);
       break;
     case 'mining.configure':
@@ -191,7 +191,6 @@ const Client = function(config, socket, id, authorizeFn) {
 
   // Broadcast Mining Job to Stratum Client
   this.broadcastMiningJob = function(parameters, diffIndex, diffRatio) {
-  // this.broadcastMiningJob = function(parameters) {
 
     // Check Processed Shares
     const activityAgo = Date.now() - _this.activity;
@@ -267,8 +266,7 @@ const Client = function(config, socket, id, authorizeFn) {
   this.handleSubscribe = function(message) {
 
     // Emit Subscription Event
-    // _this.emit('client.subscription', message, (error, extraNonce1, extraNonce2Size) => {
-    _this.emit('client.subscription', {}, (error, extraNonce1, extraNonce2Size) => {
+    _this.emit('client.subscription', message, (error, extraNonce1, extraNonce2Size) => {
       if (error) {
         _this.sendJson({ id: message.id, result: null, error: error });
         return;
@@ -295,16 +293,13 @@ const Client = function(config, socket, id, authorizeFn) {
     const clientAddrs = _this.validateName(message.params[0]);
     const clientFlags = _this.validatePassword(message.params[1]);
 
+    // Emit Authorization Event
+    _this.emit('client.authorization', clientFlags);
+
     // Set Initial Variables
     _this.addrPrimary = clientAddrs[0];
     _this.addrAuxiliary = clientAddrs[1];
     _this.clientPassword = message.params[1];
-
-    // Check for Difficulty Flag
-    if (clientFlags.difficulty) {
-      const diffMultiplier = utils.getDifficultyMultiplier();
-      _this.enqueueDifficulty(clientFlags.difficulty * diffMultiplier);
-    }
 
     // Check to Authorize Client
     _this.authorizeFn(
@@ -324,7 +319,8 @@ const Client = function(config, socket, id, authorizeFn) {
           result: _this.authorized,
           error: result.error
         });
-      });
+      }
+    );
   };
 
   // Manage Stratum Configuration

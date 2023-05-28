@@ -1,3 +1,4 @@
+const MockProcess = require('jest-mock-process');
 const utils = require('../main/utils');
 
 const network = {};
@@ -138,6 +139,31 @@ describe('Test utility functionality', () => {
     };
     const expected = 123;
     expect(utils.getDifficultyIndex(rotation, cnRotations)).toStrictEqual(expected);
+  });
+
+  test('Test implemented getDifficultyMultiplier 1', () => {
+    const uptime = MockProcess.mockProcessUptime(0);
+    expect(utils.getDifficultyMultiplier()).toStrictEqual(3);
+  });
+
+  test('Test implemented getDifficultyMultiplier 2', () => {
+    const uptime = MockProcess.mockProcessUptime(65);
+    expect(utils.getDifficultyMultiplier()).toStrictEqual(2.5);
+  });
+
+  test('Test implemented getDifficultyMultiplier 3', () => {
+    const uptime = MockProcess.mockProcessUptime(125);
+    expect(utils.getDifficultyMultiplier()).toStrictEqual(2);
+  });
+
+  test('Test implemented getDifficultyMultiplier 4', () => {
+    const uptime = MockProcess.mockProcessUptime(185);
+    expect(utils.getDifficultyMultiplier()).toStrictEqual(1.5);
+  });
+
+  test('Test implemented getDifficultyMultiplier 5', () => {
+    const uptime = MockProcess.mockProcessUptime(245);
+    expect(utils.getDifficultyMultiplier()).toStrictEqual(1);
   });
 
   test('Test implemented getEncodingLength', () => {

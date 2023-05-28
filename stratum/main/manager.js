@@ -96,7 +96,6 @@ const Manager = function(config, configMain) {
 
     // _this.emit('manager.block.new', tmpTemplate, diffIndex, diffRatio);
     _this.emit('manager.block.new', tmpTemplate, 1, 1);
-    // _this.emit('manager.block.new', tmpTemplate);
     _this.validJobs[tmpTemplate.jobId] = tmpTemplate;
     return true;
   };
