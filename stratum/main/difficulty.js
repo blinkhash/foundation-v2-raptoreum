@@ -97,10 +97,8 @@ const Difficulty = function(config) {
 
       // Check Limits
       if (_this.config.minimum > newDifficulty) {
-        // console.log('diff too low')
         newDifficulty = _this.config.minimum;
       } else if (_this.config.maximum < newDifficulty) {
-        // console.log('diff too high')
         newDifficulty = _this.config.maximum;
       } else {
         newDifficulty = utils.roundTo(newDifficulty, 5);

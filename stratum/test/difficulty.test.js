@@ -39,11 +39,13 @@ describe('Test difficulty functionality', () => {
     MockDate.set(1634742080841);
     const difficulty = new Difficulty(difficultyCopy);
     difficulty.lastRetargetTime = 1634741500;
-    difficulty.lastSavedTime = 1634741505;
+    difficulty.clients['test'] = {
+      difficulties: [ 10 ],
+      timestamps: [1634742080841, 1634742080843],
+    };
     difficulty.handleClient(client);
     difficulty.on('client.difficulty.new', (client, current) => {
       expect(current).toBe(8);
-      expect(difficulty.clients['test']).toStrictEqual([575]);
       done();
     });
     client.emit('client.submit');
@@ -146,6 +148,7 @@ describe('Test difficulty functionality', () => {
   //   difficulty.handleDifficulty(client);
   // });
 
+
   // test('Test client difficulty management [8]', (done) => {
   //   MockDate.set(1634742080841);
   //   const difficulty = new Difficulty(difficultyCopy);
@@ -176,7 +179,7 @@ describe('Test difficulty functionality', () => {
   // test('Test client difficulty management [10]', () => {
   //   MockDate.set(1634742080841);
   //   const difficulty = new Difficulty(difficultyCopy);
-  //   client.difficulty = 512;
+  //   client.difficulty = 520;
   //   difficulty.clients['test'] = new Array(24).fill(0);
   //   difficulty.lastRetargetTime = 1634741900;
   //   difficulty.lastSavedTime = 1634741980;

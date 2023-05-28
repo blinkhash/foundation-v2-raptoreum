@@ -224,8 +224,8 @@ const Pool = function(config, configMain, callback) {
     _this.submitPrimary(shareData.hex, (error, response) => {
       if (error) _this.emitLog('error', false, response);
       else {
-        // _this.emitLog('special', false, _this.text.stratumBlocksText4(_this.config.primary.coin.name, shareData.height, shareData.addrPrimary.split('.')[0]));
-        _this.emitLog('special', false, _this.text.stratumBlocksText4(_this.config.primary.coin.name, shareData.height));
+        const miner = shareData.addrPrimary.split('.')[0] || 'anonymous miner';
+        _this.emitLog('special', false, _this.text.stratumBlocksText4(_this.config.primary.coin.name, shareData.height, miner));
         _this.checkAccepted(_this.primary.daemon, shareData.hash, (accepted, transaction) => {
           shareData.transaction = transaction;
           callback(accepted, shareData);
@@ -1182,7 +1182,6 @@ const Pool = function(config, configMain, callback) {
 
     // Handle New Block Templates
     _this.manager.on('manager.block.new', (template, diffIndex, diffRatio) => {
-    // _this.manager.on('manager.block.new', (template) => {
 
       // Process Primary Network Data
       _this.checkNetwork(_this.primary.daemon, 'primary', (networkData) => {
@@ -1198,7 +1197,6 @@ const Pool = function(config, configMain, callback) {
 
       // Broadcast New Mining Jobs to Clients
       if (_this.network) _this.network.broadcastMiningJobs(template, true, diffIndex, diffRatio);
-      // if (_this.network) _this.network.broadcastMiningJobs(template, true);
     });
 
     // Handle Updated Block Templates
@@ -1206,7 +1204,6 @@ const Pool = function(config, configMain, callback) {
 
       // Broadcast New Mining Jobs to Clients
       if (_this.network) _this.network.broadcastMiningJobs(template, false, 1, 1);
-      // if (_this.network) _this.network.broadcastMiningJobs(template, false);
     });
 
     // Indicate Manager is Setup Successfully
@@ -1384,8 +1381,8 @@ const Pool = function(config, configMain, callback) {
     client.on('client.subscription', (message, callback) => {
 
       // Log Miner Info
-      // if (message.params && message.params.length > 0)
-      //   _this.emitLog('log', true, `Worker with ${ message.params[0] } subscribed`);
+      if (message.params && message.params.length > 0)
+        _this.emitLog('log', true, `Worker with ${ message.params[0] } subscribed`);
 
       const extraNonce = _this.manager.extraNonceCounter.next();
       callback(null, extraNonce, _this.manager.extraNonce2Size);
