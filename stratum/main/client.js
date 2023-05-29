@@ -1,5 +1,4 @@
 const events = require('events');
-const utils = require('./utils');
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -16,10 +15,10 @@ const Client = function(config, socket, id, authorizeFn) {
   const activePort = _this.config.ports
     .filter((port) => port.port === _this.socket.localPort)
     .filter((port) => typeof port.difficulty.minimum !== undefined)
-    .filter((port) => typeof port.difficulty.maximum !== undefined)
+    .filter((port) => typeof port.difficulty.maximum !== undefined);
       
-  this.minDifficulty = activePort[0].difficulty.minimum;
-  this.maxDifficulty = activePort[0].difficulty.maximum;
+  this.minDiff = activePort[0].difficulty.minimum;
+  this.maxDiff = activePort[0].difficulty.maximum;
 
   // Client Variables
   this.activity = Date.now();
@@ -40,6 +39,20 @@ const Client = function(config, socket, id, authorizeFn) {
     _this.socket.write(response);
   };
 
+  // Check if New Difficulty Within Port Limits
+  this.checkLimits = function(minimum, maximum, difficulty) {
+    let newDifficulty = difficulty;
+
+    // Check Limits
+    if (minimum > difficulty) {
+      newDifficulty = minimum;
+    } else if (maximum < difficulty) {
+      newDifficulty = maximum;
+    } 
+
+    return newDifficulty;
+  };
+
   // Get Label of Stratum Client
   this.sendLabel = function() {
     const worker = _this.addrPrimary || '(unauthorized)';
@@ -49,8 +62,7 @@ const Client = function(config, socket, id, authorizeFn) {
 
   // Push Updated Difficulty to Queue
   this.enqueueDifficulty = function(difficulty) {
-    const newDiff = utils.roundTo(difficulty, 4);
-    _this.pendingDifficulty = newDiff;
+    _this.pendingDifficulty = difficulty;
     _this.emit('client.difficulty.queued', newDiff);
   };
 
@@ -216,29 +228,18 @@ const Client = function(config, socket, id, authorizeFn) {
     if (_this.pendingDifficulty != null) {
 
       // Apply CN Round Index
-      _this.pendingDifficulty = utils.roundTo(_this.pendingDifficulty * diffIndex, 4);
+      _this.pendingDifficulty *= diffIndex;
 
-      // Check Limits
-      if (_this.minDifficulty > _this.pendingDifficulty) {
-        _this.pendingDifficulty = _this.minDifficulty;
-      } else if (_this.maxDifficulty < _this.pendingDifficulty) {
-        _this.pendingDifficulty = _this.maxDifficulty;
-      }
-
+      // Check Limits and Broadcast new Difficulty
+      _this.pendingDifficulty = _this.checkLimits(_this.minDiff, _this.maxDiff, _this.pendingDifficulty);
       result = _this.broadcastDifficulty(_this.pendingDifficulty);
       _this.pendingDifficulty = null;
+
     } else if (diffRatio != 1 && _this.difficulty > 0) {
-      _this.difficulty *= diffIndex;
+      _this.difficulty *= diffRatio;
 
-      // Check Limits
-      if (_this.minDifficulty > _this.difficulty) {
-        _this.difficulty = _this.minDifficulty;
-      } else if (_this.maxDifficulty < _this.difficulty) {
-        _this.difficulty = _this.maxDifficulty;
-      } else {
-        _this.difficulty = utils.roundTo(_this.difficulty, 4);
-      }
-
+      // Check Limits and Broadcast new Difficulty
+      _this.difficulty = _this.checkLimits(_this.minDiff, _this.maxDiff, _this.difficulty); 
       result = _this.broadcastDifficulty(_this.difficulty);
     }
 
