@@ -19,8 +19,8 @@ config.logger.logLevel = 'log';
 
 // Clustering Configuration
 config.clustering = {};
-config.clustering.enabled = true;
-config.clustering.forks = 'auto';
+config.clustering.enabled = false;
+config.clustering.forks = 1;
 
 // TLS Configuration
 config.tls = {};

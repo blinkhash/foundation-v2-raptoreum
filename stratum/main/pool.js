@@ -1200,10 +1200,10 @@ const Pool = function(config, configMain, callback) {
     });
 
     // Handle Updated Block Templates
-    _this.manager.on('manager.block.updated', (template, diffIndex) => {
+    _this.manager.on('manager.block.updated', (template) => {
 
       // Broadcast New Mining Jobs to Clients
-      if (_this.network) _this.network.broadcastMiningJobs(template, false, diffIndex, 1);
+      if (_this.network) _this.network.broadcastMiningJobs(template, false, 1, 1);
     });
 
     // Indicate Manager is Setup Successfully

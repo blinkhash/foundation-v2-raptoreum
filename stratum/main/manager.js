@@ -42,7 +42,6 @@ const Manager = function(config, configMain) {
 
   // Check if New Block is Processed
   this.handleUpdates = function(rpcData) {
-    let diffIndex = 1;
 
     // Build New Block Template
     const tmpTemplate = new Template(
@@ -51,12 +50,9 @@ const Manager = function(config, configMain) {
       Object.assign({}, rpcData),
       _this.extraNoncePlaceholder);
 
-    if (_this.config.rotations.enabled && tmpTemplate.rpcData.previousblockhash)
-      // diffIndex = _this.getCNIndex(tmpTemplate.rpcData.previousblockhash);
-
     // Update Current Template
     _this.currentJob = tmpTemplate;
-    _this.emit('manager.block.updated', tmpTemplate, diffIndex);
+    _this.emit('manager.block.updated', tmpTemplate);
     _this.validJobs[tmpTemplate.jobId] = tmpTemplate;
     return true;
   };
@@ -84,16 +80,22 @@ const Manager = function(config, configMain) {
       Object.assign({}, rpcData),
       _this.extraNoncePlaceholder);
 
-    // Detect CryptoNight rotation
+    // Apply CryptoNight Rotations
     if (_this.config.rotations.enabled && tmpTemplate.rpcData.previousblockhash) {
+      const newHash = tmpTemplate.rpcData.previousblockhash;
+      let currentHash = null;
       // diffIndex = _this.getCNIndex(tmpTemplate.rpcData.previousblockhash);
 
       if (_this.currentJob) {
         const newHeight = tmpTemplate.rpcData.height || 0;
         const currentHeight = _this.currentJob.rpcData ? _this.currentJob.rpcData.height : 0;
-
-        // if (newHeight > currentHeight)
-        //   diffRatio = _this.handleCNRotation(currentHeight, newHeight) || 1;
+        
+        if (newHeight > currentHeight && _this.currentJob.rpcData) {
+          if (_this.currentJob.rpcData.previousblockhash)
+            currentHash = _this.currentJob.rpcData.previousblockhash;
+          // if (currentHash != null)
+            // diffRatio = _this.handleCNRotation(currentHash, newHash);
+        }
       }
     }
 

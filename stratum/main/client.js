@@ -49,8 +49,9 @@ const Client = function(config, socket, id, authorizeFn) {
 
   // Push Updated Difficulty to Queue
   this.enqueueDifficulty = function(difficulty) {
-    _this.pendingDifficulty = difficulty;
-    _this.emit('client.difficulty.queued', difficulty);
+    const newDiff = utils.roundTo(difficulty, 4);
+    _this.pendingDifficulty = newDiff;
+    _this.emit('client.difficulty.queued', newDiff);
   };
 
   // Validate Client Name
@@ -201,9 +202,6 @@ const Client = function(config, socket, id, authorizeFn) {
   // Broadcast Mining Job to Stratum Client
   this.broadcastMiningJob = function(parameters, diffIndex, diffRatio) {
 
-    // console.log(diffIndex)
-    // console.log(diffRatio)
-
     // Check Processed Shares
     const activityAgo = Date.now() - _this.activity;
     if (activityAgo > _this.config.settings.timeout.connection) {
@@ -214,31 +212,39 @@ const Client = function(config, socket, id, authorizeFn) {
     }
 
     // Set New Pending Difficulty
+    let result;
     if (_this.pendingDifficulty != null) {
-    //   difficulty = _this.pendingDifficulty * diffIndex;
-    //   _this.pendingDifficulty = null;
-      
-    // No Pending Difficulty but DiffRatio != 1 
-    // } else if (diffRatio != 1 && diffRatio != undefined) {
-    //   difficulty = _this.difficulty * diffRatio;
-    // }
 
-    // if (difficulty > 0) {
+      // Apply CN Round Index
+      _this.pendingDifficulty = utils.roundTo(_this.pendingDifficulty * diffIndex, 4);
 
       // Check Limits
       if (_this.minDifficulty > _this.pendingDifficulty) {
         _this.pendingDifficulty = _this.minDifficulty;
       } else if (_this.maxDifficulty < _this.pendingDifficulty) {
         _this.pendingDifficulty = _this.maxDifficulty;
-      } else {
-        _this.pendingDifficulty = utils.roundTo(_this.pendingDifficulty, 4);
       }
 
-      const result = _this.broadcastDifficulty(_this.pendingDifficulty);
-      if (result) _this.emit('client.difficulty.updated', _this.difficulty);
+      result = _this.broadcastDifficulty(_this.pendingDifficulty);
       _this.pendingDifficulty = null;
+    } else if (diffRatio != 1 && _this.difficulty > 0) {
+      _this.difficulty *= diffIndex;
+
+      // Check Limits
+      if (_this.minDifficulty > _this.difficulty) {
+        _this.difficulty = _this.minDifficulty;
+      } else if (_this.maxDifficulty < _this.difficulty) {
+        _this.difficulty = _this.maxDifficulty;
+      } else {
+        _this.difficulty = utils.roundTo(_this.difficulty, 4);
+      }
+
+      result = _this.broadcastDifficulty(_this.difficulty);
     }
 
+    // Emit Difficulty Update
+    if (result) _this.emit('client.difficulty.updated', _this.difficulty);
+    
     // Broadcast Mining Job to Client
     _this.sendJson({
       id: null,
