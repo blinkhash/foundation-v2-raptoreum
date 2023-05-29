@@ -12,6 +12,12 @@ const Client = function(config, socket, id, authorizeFn) {
   this.socket = socket;
   this.authorizeFn = authorizeFn;
 
+  // Get Correct Active Port Limits
+  // const activePort = _this.config.ports
+  //   .filter((port) => port.port === _this.socket.localPort)[0];
+  // this.minDifficulty = activePort.difficulty.minimum;
+  // this.maxDifficulty = activePort.difficulty.maximum;
+
   // Client Variables
   this.activity = Date.now();
   this.authorized = false;
@@ -201,37 +207,18 @@ const Client = function(config, socket, id, authorizeFn) {
       return;
     }
 
-    // Update Client Difficulty
-    // if (_this.pendingDifficulty != null || (diffRatio && diffRatio != 1)) {
+    // Set New Pending Difficulty
     if (_this.pendingDifficulty != null) {
-      // let difficulty;
-      // let minDifficulty;
-      // let maxDifficulty;
+    //   difficulty = _this.pendingDifficulty * diffIndex;
+    //   _this.pendingDifficulty = null;
       
-      // Get Difficulty Limits from Port Configuration
-      // const port = _this.socket._sockname.port;
-      // _this.config.ports.forEach(entry => {
-      //   if (entry.enabled && entry.port == port) {
-      //     minDifficulty = entry.difficulty.minimum;
-      //     maxDifficulty = entry.difficulty.maximum;
-      //   };
-      // });
+    // No Pending Difficulty but DiffRatio != 1 
+    // } else if (diffRatio != 1 && diffRatio != undefined) {
+    //   difficulty = _this.difficulty * diffRatio;
+    // }
 
-      // Set New Difficulty
-      // if (_this.pendingDifficulty != null) {
-      //   difficulty = _this.pendingDifficulty * diffIndex;
-      // } else {
-      //   difficulty = _this.difficulty * diffRatio;
-      // }
+    // if (difficulty > 0) {
 
-      // Check Limits
-      // if (minDifficulty > difficulty) {
-      //   _this.pendingDifficulty = minDifficulty;
-      // } else if (maxDifficulty < difficulty) {
-      //   _this.pendingDifficulty = maxDifficulty;
-      // } else {
-      //   _this.pendingDifficulty = difficulty;
-      // };
 
       const result = _this.broadcastDifficulty(_this.pendingDifficulty);
       if (result) _this.emit('client.difficulty.updated', _this.difficulty);
@@ -293,9 +280,6 @@ const Client = function(config, socket, id, authorizeFn) {
     const clientAddrs = _this.validateName(message.params[0]);
     const clientFlags = _this.validatePassword(message.params[1]);
 
-    // Emit Authorization Event
-    _this.emit('client.authorization', clientFlags);
-
     // Set Initial Variables
     _this.addrPrimary = clientAddrs[0];
     _this.addrAuxiliary = clientAddrs[1];
@@ -319,6 +303,9 @@ const Client = function(config, socket, id, authorizeFn) {
           result: _this.authorized,
           error: result.error
         });
+
+        // Emit Authorization Event
+        _this.emit('client.authorization', clientFlags);
       }
     );
   };

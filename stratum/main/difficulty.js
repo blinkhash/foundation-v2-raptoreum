@@ -1,5 +1,4 @@
 const events = require('events');
-const utils = require('./utils');
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -29,8 +28,6 @@ const Difficulty = function(config) {
     const difficulties = _this.clients[client.id].difficulties;
     const queueLength = difficulties.length;
 
-    // console.log('queue length: ' + queueLength)
-
     // Check that Queue has Sufficient Entries
     if (queueLength < 2) return null;
 
@@ -39,19 +36,13 @@ const Difficulty = function(config) {
     const queueInterval = timestamps[timestamps.length - 1] - timestamps[0];
     const targetDiff =  queueInterval != 0 ? _this.config.targetTime * difficultySum / queueInterval : client.difficulty;
 
-    // console.log('diff sum: ' + difficultySum)
-    // console.log('interval: ' + queueInterval)
-    
-
     // Return New Difficulty
     const diffCorrection = targetDiff / client.difficulty || 1;
     return diffCorrection != 1 ? diffCorrection : null;
   };
 
-  // Handle Individual Clients
+  // Add Event Listeners to Individual Clients
   this.handleClient = function(client) {
-
-    // Add Event Listeners to Client Instance
 
     // Client Subscribes
     client.on('client.subscription', () => {
@@ -64,12 +55,10 @@ const Difficulty = function(config) {
     });
 
     // Client Submission
-    // client.on('client.submit', () => _this.handleDifficulty(client, 1, 1));   ????
     client.on('client.submit', () => _this.handleDifficulty(client));
   };
 
   // Handle Difficulty Updates
-  // this.handleDifficulty = function(client, diffIndex, diffRatio) { ?????
   this.handleDifficulty = function(client) {
 
     // Update Current Time/Values
@@ -87,27 +76,18 @@ const Difficulty = function(config) {
     // Calculate Difference Between Desired vs. Average Time
     if ((curTime - _this.lastRetargetTime) < _this.config.retargetTime) return;
     const diffCorrection = _this.getDiffCorrection(client);
-    // console.log('correction: ' + diffCorrection)
 
     // Difficulty Will Be Updated
     if (diffCorrection != null && (diffCorrection > _this.maxBoundary || diffCorrection < _this.minBoundary)) {
-
-      // Assign New Difficulty
       let newDifficulty = client.difficulty * diffCorrection;
-
-
-      // console.log('new diff: ' + newDifficulty)
 
       // Check Limits
       if (_this.config.minimum > newDifficulty) {
         newDifficulty = _this.config.minimum;
       } else if (_this.config.maximum < newDifficulty) {
         newDifficulty = _this.config.maximum;
-      } else {
-        newDifficulty = utils.roundTo(newDifficulty, 5);
       }
 
-      // console.log('setting new diff: ' + newDifficulty)
       _this.emit('client.difficulty.new', client, newDifficulty);
     };
 

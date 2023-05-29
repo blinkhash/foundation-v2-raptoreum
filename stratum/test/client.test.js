@@ -9,6 +9,7 @@ const events = require('events');
 function mockSocket() {
   const socket = new events.EventEmitter();
   socket.remoteAddress = '127.0.0.1',
+  socket.localPort = 3002,
   socket.destroy = () => {
     socket.emit('log', 'destroyed');
   };
@@ -404,7 +405,23 @@ describe('Test client functionality', () => {
     const response = [];
     const socket = mockSocket();
     const client = new Client(configCopy, socket, 0, () => {});
-    client.pendingDifficulty = 8;
+    client.pendingDifficulty = 10;
+    client.socket.on('log', (text) => {
+      response.push(text);
+      if (response.length === 2) {
+        expect(response[0]).toStrictEqual('{"id":null,"method":"mining.set_difficulty","params":[15]}\n');
+        expect(response[1]).toStrictEqual('{"id":null,"method":"mining.notify","params":[0,0,0,0]}\n');
+        done();
+      }
+    });
+    client.broadcastMiningJob([0,0,0,0], 1.5, 1);
+  });
+
+  test('Test client job updates [4]', (done) => {
+    const response = [];
+    const socket = mockSocket();
+    const client = new Client(configCopy, socket, 0, () => {});
+    client.pendingDifficulty = 5;
     client.socket.on('log', (text) => {
       response.push(text);
       if (response.length === 2) {
@@ -413,10 +430,42 @@ describe('Test client functionality', () => {
         done();
       }
     });
-    client.broadcastMiningJob([0,0,0,0]);
+    client.broadcastMiningJob([0,0,0,0], 1, 1);
   });
 
-  test('Test client job updates [4]', (done) => {
+  test('Test client job updates [5]', (done) => {
+    const response = [];
+    const socket = mockSocket();
+    const client = new Client(configCopy, socket, 0, () => {});
+    client.pendingDifficulty = 1000;
+    client.socket.on('log', (text) => {
+      response.push(text);
+      if (response.length === 2) {
+        expect(response[0]).toStrictEqual('{"id":null,"method":"mining.set_difficulty","params":[512]}\n');
+        expect(response[1]).toStrictEqual('{"id":null,"method":"mining.notify","params":[0,0,0,0]}\n');
+        done();
+      }
+    });
+    client.broadcastMiningJob([0,0,0,0], 1, 1);
+  });
+
+  test('Test client job updates [6]', (done) => {
+    const response = [];
+    const socket = mockSocket();
+    const client = new Client(configCopy, socket, 0, () => {});
+    client.difficulty = 10.1234;
+    client.socket.on('log', (text) => {
+      response.push(text);
+      if (response.length === 2) {
+        expect(response[0]).toStrictEqual('{"id":null,"method":"mining.set_difficulty","params":[15.1851]}\n');
+        expect(response[1]).toStrictEqual('{"id":null,"method":"mining.notify","params":[0,0,0,0]}\n');
+        done();
+      }
+    });
+    client.broadcastMiningJob([0,0,0,0], 1, 1.5);
+  });
+
+  test('Test client job updates [7]', (done) => {
     const socket = mockSocket();
     const client = new Client(configCopy, socket, 0, () => {});
     client.pendingDifficulty = 0;

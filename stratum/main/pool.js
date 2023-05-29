@@ -1390,22 +1390,24 @@ const Pool = function(config, configMain, callback) {
 
     // Handle Client Authorization Events
     client.on('client.authorization', (clientFlags) => {
-
-      // Get Correct Initial Port Difficulty
+      const diffMultiplier = utils.getDifficultyMultiplier();
+      let difficulty = 0.2;
       const validPorts = _this.config.ports
         .filter((port) => port.port === client.socket.localPort)
         .filter((port) => typeof port.difficulty.initial !== 'undefined');
 
-      // Check for Initial Difficulty Flag
       if (clientFlags.difficulty) {
-        const diffMultiplier = utils.getDifficultyMultiplier();
-        client.broadcastDifficulty(clientFlags.difficulty * diffMultiplier);
-      } else if (validPorts.length >= 1) {
-        const diffMultiplier = utils.getDifficultyMultiplier();
 
-        // initial diff
-        client.broadcastDifficulty(validPorts[0].difficulty.initial * diffMultiplier);
-      } else client.broadcastDifficulty(0.2);
+        // Set Custom Initial Difficulty
+        difficulty = clientFlags.difficulty;
+      } else if (validPorts.length >= 1) {
+
+        // Get Correct Initial Port Difficulty
+        
+        difficulty = validPorts[0].difficulty.initial;
+      }
+      
+      client.broadcastDifficulty(difficulty * diffMultiplier);
 
       // Send Mining Job Parameters to Miner
       const jobParams = _this.manager.currentJob.handleParameters(true);
@@ -1439,7 +1441,6 @@ const Pool = function(config, configMain, callback) {
         .filter((port) => port.enabled)
         .flatMap((port) => port.port);
       _this.network.broadcastMiningJobs(_this.manager.currentJob, true, 1, 1);
-      // _this.network.broadcastMiningJobs(_this.manager.currentJob, true);
       _this.emitLog('debug', true, _this.text.checksMessageText11(), true);
       callback();
     });
