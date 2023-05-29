@@ -1200,10 +1200,10 @@ const Pool = function(config, configMain, callback) {
     });
 
     // Handle Updated Block Templates
-    _this.manager.on('manager.block.updated', (template) => {
+    _this.manager.on('manager.block.updated', (template, diffIndex) => {
 
       // Broadcast New Mining Jobs to Clients
-      if (_this.network) _this.network.broadcastMiningJobs(template, false, 1, 1);
+      if (_this.network) _this.network.broadcastMiningJobs(template, false, diffIndex, 1);
     });
 
     // Indicate Manager is Setup Successfully
@@ -1390,7 +1390,7 @@ const Pool = function(config, configMain, callback) {
 
     // Handle Client Authorization Events
     client.on('client.authorization', (clientFlags) => {
-      const diffMultiplier = utils.getDifficultyMultiplier();
+      const multiplier = utils.getUptimeMultiplier(0.9);
       let difficulty = 0.2;
       const validPorts = _this.config.ports
         .filter((port) => port.port === client.socket.localPort)
@@ -1407,11 +1407,11 @@ const Pool = function(config, configMain, callback) {
         difficulty = validPorts[0].difficulty.initial;
       }
       
-      client.broadcastDifficulty(difficulty * diffMultiplier);
+      client.broadcastDifficulty(difficulty * multiplier);
 
       // Send Mining Job Parameters to Miner
       const jobParams = _this.manager.currentJob.handleParameters(true);
-      client.broadcastMiningJob(jobParams);
+      client.broadcastMiningJob(jobParams, 1, 1);
     });
 
     // Handle Client Submission Events

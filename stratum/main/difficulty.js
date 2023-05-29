@@ -81,12 +81,12 @@ const Difficulty = function(config) {
     if (diffCorrection != null && (diffCorrection > _this.maxBoundary || diffCorrection < _this.minBoundary)) {
       let newDifficulty = client.difficulty * diffCorrection;
 
-      // Check Limits
-      if (_this.config.minimum > newDifficulty) {
-        newDifficulty = _this.config.minimum;
-      } else if (_this.config.maximum < newDifficulty) {
-        newDifficulty = _this.config.maximum;
-      }
+      // // Check Limits
+      // if (_this.config.minimum > newDifficulty) {
+      //   newDifficulty = _this.config.minimum;
+      // } else if (_this.config.maximum < newDifficulty) {
+      //   newDifficulty = _this.config.maximum;
+      // }
 
       _this.emit('client.difficulty.new', client, newDifficulty);
     };

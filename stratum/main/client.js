@@ -13,10 +13,13 @@ const Client = function(config, socket, id, authorizeFn) {
   this.authorizeFn = authorizeFn;
 
   // Get Correct Active Port Limits
-  // const activePort = _this.config.ports
-  //   .filter((port) => port.port === _this.socket.localPort)[0];
-  // this.minDifficulty = activePort.difficulty.minimum;
-  // this.maxDifficulty = activePort.difficulty.maximum;
+  const activePort = _this.config.ports
+    .filter((port) => port.port === _this.socket.localPort)
+    .filter((port) => typeof port.difficulty.minimum !== undefined)
+    .filter((port) => typeof port.difficulty.maximum !== undefined)
+      
+  this.minDifficulty = activePort[0].difficulty.minimum;
+  this.maxDifficulty = activePort[0].difficulty.maximum;
 
   // Client Variables
   this.activity = Date.now();
@@ -198,6 +201,9 @@ const Client = function(config, socket, id, authorizeFn) {
   // Broadcast Mining Job to Stratum Client
   this.broadcastMiningJob = function(parameters, diffIndex, diffRatio) {
 
+    // console.log(diffIndex)
+    // console.log(diffRatio)
+
     // Check Processed Shares
     const activityAgo = Date.now() - _this.activity;
     if (activityAgo > _this.config.settings.timeout.connection) {
@@ -219,6 +225,14 @@ const Client = function(config, socket, id, authorizeFn) {
 
     // if (difficulty > 0) {
 
+      // Check Limits
+      if (_this.minDifficulty > _this.pendingDifficulty) {
+        _this.pendingDifficulty = _this.minDifficulty;
+      } else if (_this.maxDifficulty < _this.pendingDifficulty) {
+        _this.pendingDifficulty = _this.maxDifficulty;
+      } else {
+        _this.pendingDifficulty = utils.roundTo(_this.pendingDifficulty, 4);
+      }
 
       const result = _this.broadcastDifficulty(_this.pendingDifficulty);
       if (result) _this.emit('client.difficulty.updated', _this.difficulty);

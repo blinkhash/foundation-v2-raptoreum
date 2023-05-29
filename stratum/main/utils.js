@@ -335,8 +335,8 @@ exports.getSolutionSlice = function(nParam, kParam) {
   }
 };
 
-// Get Difficulty Multiplier After Server Start
-exports.getDifficultyMultiplier = function() {
+// Get Parameter Multiplier After Server Start
+exports.getUptimeMultiplier = function(strength = 1) {
   const uptime = process.uptime();
   const limit1 = 60;
   const limit2 = 120
@@ -345,13 +345,13 @@ exports.getDifficultyMultiplier = function() {
 
   let multiplier = 1;
   if (uptime <= limit1)
-    multiplier = 3;
+    multiplier = 1 + 2 * strength;
   else if (uptime > limit1 && uptime <= limit2)
-    multiplier = 2.5;
+    multiplier = 1 + 1.5 * strength;
   else if (uptime > limit2 && uptime <= limit3)
-    multiplier = 2;
+    multiplier = 1 + 1 * strength;
   else if (uptime > limit3 && uptime <= limit4)
-    multiplier = 1.5;
+    multiplier = 1 + 0.5 * strength;
   
   return multiplier;
 };
