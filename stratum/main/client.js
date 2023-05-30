@@ -1,4 +1,5 @@
 const events = require('events');
+const utils = require('./utils');
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -15,8 +16,8 @@ const Client = function(config, socket, id, authorizeFn) {
   const activePort = _this.config.ports
     .filter((port) => port.port === _this.socket.localPort)
     .filter((port) => typeof port.difficulty.minimum !== undefined)
-    .filter((port) => typeof port.difficulty.maximum !== undefined);
-      
+    .filter((port) => typeof port.difficulty.maximum !== undefined)
+
   this.minDiff = activePort[0].difficulty.minimum;
   this.maxDiff = activePort[0].difficulty.maximum;
 
@@ -39,20 +40,6 @@ const Client = function(config, socket, id, authorizeFn) {
     _this.socket.write(response);
   };
 
-  // Check if New Difficulty Within Port Limits
-  this.checkLimits = function(minimum, maximum, difficulty) {
-    let newDifficulty = difficulty;
-
-    // Check Limits
-    if (minimum > difficulty) {
-      newDifficulty = minimum;
-    } else if (maximum < difficulty) {
-      newDifficulty = maximum;
-    } 
-
-    return newDifficulty;
-  };
-
   // Get Label of Stratum Client
   this.sendLabel = function() {
     const worker = _this.addrPrimary || '(unauthorized)';
@@ -62,7 +49,8 @@ const Client = function(config, socket, id, authorizeFn) {
 
   // Push Updated Difficulty to Queue
   this.enqueueDifficulty = function(difficulty) {
-    _this.pendingDifficulty = difficulty;
+    const newDiff = utils.roundTo(difficulty, 4);
+    _this.pendingDifficulty = newDiff;
     _this.emit('client.difficulty.queued', newDiff);
   };
 
@@ -224,27 +212,40 @@ const Client = function(config, socket, id, authorizeFn) {
     }
 
     // Set New Pending Difficulty
+    let result;
     if (_this.pendingDifficulty != null) {
 
       // Apply CN Round Index
+      // _this.pendingDifficulty = utils.roundTo(_this.pendingDifficulty * diffIndex, 4);
       _this.pendingDifficulty *= diffIndex;
 
-      // Check Limits and Broadcast new Difficulty
-      _this.pendingDifficulty = _this.checkLimits(_this.minDiff, _this.maxDiff, _this.pendingDifficulty);
-      const result = _this.broadcastDifficulty(_this.pendingDifficulty);
-      if (result) _this.emit('client.difficulty.updated', _this.difficulty);
+      // Check Limits
+      if (_this.minDiff > _this.pendingDifficulty) {
+        _this.pendingDifficulty = _this.minDiff;
+      } else if (_this.maxDiff < _this.pendingDifficulty) {
+        _this.pendingDifficulty = _this.maxDiff;
+      }
+
+      result = _this.broadcastDifficulty(_this.pendingDifficulty);
       _this.pendingDifficulty = null;
+    } else if (diffRatio != 1 && _this.difficulty > 0) {
+      _this.difficulty *= diffIndex;
 
-    } //else if (diffRatio != 1 && _this.difficulty > 0) {
-    //   _this.difficulty *= diffRatio;
+      // Check Limits
+      if (_this.minDiff > _this.difficulty) {
+        _this.difficulty = _this.minDiff;
+      } else if (_this.maxDiff < _this.difficulty) {
+        _this.difficulty = _this.maxDiff;
+      } else {
+        _this.difficulty = utils.roundTo(_this.difficulty, 4);
+      }
 
-    //   // Check Limits and Broadcast new Difficulty
-    //   _this.difficulty = _this.checkLimits(_this.minDiff, _this.maxDiff, _this.difficulty); 
-    //   result = _this.broadcastDifficulty(_this.difficulty);
-    // }
+      result = _this.broadcastDifficulty(_this.difficulty);
+    }
 
-    
-    
+    // Emit Difficulty Update
+    if (result) _this.emit('client.difficulty.updated', _this.difficulty);
+
     // Broadcast Mining Job to Client
     _this.sendJson({
       id: null,
