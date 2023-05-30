@@ -224,7 +224,6 @@ const Client = function(config, socket, id, authorizeFn) {
     }
 
     // Set New Pending Difficulty
-    let result;
     if (_this.pendingDifficulty != null) {
 
       // Apply CN Round Index
@@ -232,19 +231,19 @@ const Client = function(config, socket, id, authorizeFn) {
 
       // Check Limits and Broadcast new Difficulty
       _this.pendingDifficulty = _this.checkLimits(_this.minDiff, _this.maxDiff, _this.pendingDifficulty);
-      result = _this.broadcastDifficulty(_this.pendingDifficulty);
+      const result = _this.broadcastDifficulty(_this.pendingDifficulty);
+      if (result) _this.emit('client.difficulty.updated', _this.difficulty);
       _this.pendingDifficulty = null;
 
-    } else if (diffRatio != 1 && _this.difficulty > 0) {
-      _this.difficulty *= diffRatio;
+    } //else if (diffRatio != 1 && _this.difficulty > 0) {
+    //   _this.difficulty *= diffRatio;
 
-      // Check Limits and Broadcast new Difficulty
-      _this.difficulty = _this.checkLimits(_this.minDiff, _this.maxDiff, _this.difficulty); 
-      result = _this.broadcastDifficulty(_this.difficulty);
-    }
+    //   // Check Limits and Broadcast new Difficulty
+    //   _this.difficulty = _this.checkLimits(_this.minDiff, _this.maxDiff, _this.difficulty); 
+    //   result = _this.broadcastDifficulty(_this.difficulty);
+    // }
 
-    // Emit Difficulty Update
-    if (result) _this.emit('client.difficulty.updated', _this.difficulty);
+    
     
     // Broadcast Mining Job to Client
     _this.sendJson({
