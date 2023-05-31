@@ -195,7 +195,7 @@ const Client = function(config, socket, id, authorizeFn) {
       params: [difficulty],
     });
 
-    console.log('xxx bDiff' + _this.id, difficulty)
+    console.log('xxx broadcastDiff' + _this.id, difficulty)
     // Difficulty Updated Correctly
     return true;
   };
@@ -213,7 +213,7 @@ const Client = function(config, socket, id, authorizeFn) {
     }
 
     // Set New Pending Difficulty
-    let result;
+    let result = null;
     if (_this.pendingDifficulty != null) {
 
       // Apply CN Round Index
@@ -229,8 +229,7 @@ const Client = function(config, socket, id, authorizeFn) {
 
       result = _this.broadcastDifficulty(_this.pendingDifficulty);
       _this.pendingDifficulty = null;
-    // } else if (diffRatio != 1 && _this.difficulty > 0) {
-    } else if (_this.difficulty > 0) {
+    } else if (diffRatio != 1 && _this.difficulty > 0) {
       console.log('yyy new block so apply diffIndex: ' + diffRatio + ' to ' + _this.difficulty)
       // _this.difficulty *= diffIndex;
 
@@ -247,7 +246,7 @@ const Client = function(config, socket, id, authorizeFn) {
     }
 
     // Emit Difficulty Update
-    if (result) _this.emit('client.difficulty.updated', _this.difficulty);
+    if (result != null) _this.emit('client.difficulty.updated', _this.difficulty);
 
     // Broadcast Mining Job to Client
     _this.sendJson({

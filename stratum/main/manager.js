@@ -94,9 +94,10 @@ const Manager = function(config, configMain) {
           console.log('xxx new block');
           if (_this.currentJob.rpcData.previousblockhash)
             currentHash = _this.currentJob.rpcData.previousblockhash;
-          if (currentHash != null) 
-            console.log('current: ' + currentHash + ' and new: ' + newHash)
-            // diffRatio = _this.handleCNRotation(currentHash, newHash);
+          if (currentHash != null) {
+            console.log('currentHash: ' + currentHash + ' and newHash: ' + newHash)
+            diffRatio = _this.handleCNRotation(currentHash, newHash);
+          }
         }
       }
     }
