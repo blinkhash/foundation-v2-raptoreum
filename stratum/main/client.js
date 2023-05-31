@@ -218,7 +218,6 @@ const Client = function(config, socket, id, authorizeFn) {
 
       // Apply CN Round Index
       // _this.pendingDifficulty = utils.roundTo(_this.pendingDifficulty * diffIndex, 4);
-      console.log('xxx broadcast mJob: ' + _this.id, _this.pendingDifficulty, diffIndex);
       _this.pendingDifficulty *= diffIndex;
 
       // Check Limits
@@ -230,19 +229,21 @@ const Client = function(config, socket, id, authorizeFn) {
 
       result = _this.broadcastDifficulty(_this.pendingDifficulty);
       _this.pendingDifficulty = null;
-    } else if (diffRatio != 1 && _this.difficulty > 0) {
-      _this.difficulty *= diffIndex;
+    // } else if (diffRatio != 1 && _this.difficulty > 0) {
+    } else if (_this.difficulty > 0) {
+      console.log('yyy new block so apply diffIndex: ' + diffRatio + ' to ' + _this.difficulty)
+      // _this.difficulty *= diffIndex;
 
       // Check Limits
-      if (_this.minDiff > _this.difficulty) {
-        _this.difficulty = _this.minDiff;
-      } else if (_this.maxDiff < _this.difficulty) {
-        _this.difficulty = _this.maxDiff;
-      } else {
-        _this.difficulty = utils.roundTo(_this.difficulty, 4);
-      }
+      // if (_this.minDiff > _this.difficulty) {
+      //   _this.difficulty = _this.minDiff;
+      // } else if (_this.maxDiff < _this.difficulty) {
+      //   _this.difficulty = _this.maxDiff;
+      // } else {
+      //   _this.difficulty = utils.roundTo(_this.difficulty, 4);
+      // }
 
-      result = _this.broadcastDifficulty(_this.difficulty);
+      // result = _this.broadcastDifficulty(_this.difficulty);
     }
 
     // Emit Difficulty Update
