@@ -216,7 +216,7 @@ const Client = function(config, socket, id, authorizeFn) {
     let result = null;
     if (_this.pendingDifficulty != null) {
 
-      // Apply CN Round Index
+      // Apply CN Round Difficulty Index
       // _this.pendingDifficulty = utils.roundTo(_this.pendingDifficulty * diffIndex, 4);
       _this.pendingDifficulty *= diffIndex;
 
@@ -231,18 +231,21 @@ const Client = function(config, socket, id, authorizeFn) {
       _this.pendingDifficulty = null;
     } else if (diffRatio != 1 && _this.difficulty > 0) {
       console.log('yyy new block so apply diffIndex: ' + diffRatio + ' to ' + _this.difficulty)
-      // _this.difficulty *= diffIndex;
+
+      // Apply CN Round Difficulty Ratio
+      // _this.pendingDifficulty = utils.roundTo(_this.pendingDifficulty * diffIndex, 4);
+      _this.pendingDifficulty *= diffRatio; // added
 
       // Check Limits
-      // if (_this.minDiff > _this.difficulty) {
-      //   _this.difficulty = _this.minDiff;
-      // } else if (_this.maxDiff < _this.difficulty) {
-      //   _this.difficulty = _this.maxDiff;
-      // } else {
-      //   _this.difficulty = utils.roundTo(_this.difficulty, 4);
-      // }
+      // added
+      if (_this.minDiff > _this.pendingDifficulty) {
+        _this.pendingDifficulty = _this.minDiff;
+      } else if (_this.maxDiff < _this.pendingDifficulty) {
+        _this.pendingDifficulty = _this.maxDiff;
+      }
 
-      // result = _this.broadcastDifficulty(_this.difficulty);
+      // result = _this.broadcastDifficulty(_this.pendingDifficulty);
+      _this.pendingDifficulty = null; // added
     }
 
     // Emit Difficulty Update
