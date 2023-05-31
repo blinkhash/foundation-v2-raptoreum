@@ -244,7 +244,7 @@ const Client = function(config, socket, id, authorizeFn) {
         _this.pendingDifficulty = _this.maxDiff;
       }
 
-      // result = _this.broadcastDifficulty(_this.pendingDifficulty);
+      result = _this.broadcastDifficulty(_this.pendingDifficulty); // added
       _this.pendingDifficulty = null; // added
     }
 
