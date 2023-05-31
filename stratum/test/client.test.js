@@ -473,6 +473,6 @@ describe('Test client functionality', () => {
       expect(text).toStrictEqual('{"id":null,"method":"mining.notify","params":[0,0,0,0]}\n');
       done();
     });
-    client.broadcastMiningJob([0,0,0,0]);
+    client.broadcastMiningJob([0,0,0,0], 1, 1);
   });
 });

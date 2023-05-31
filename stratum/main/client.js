@@ -195,7 +195,6 @@ const Client = function(config, socket, id, authorizeFn) {
       params: [difficulty],
     });
 
-    console.log('xxx broadcastDiff' + _this.id, difficulty)
     // Difficulty Updated Correctly
     return true;
   };
@@ -214,10 +213,9 @@ const Client = function(config, socket, id, authorizeFn) {
 
     // Set New Pending Difficulty
     let result = null;
-    if (_this.pendingDifficulty != null) {
+    if (_this.pendingDifficulty > 0) {
 
       // Apply CN Round Difficulty Index
-      // _this.pendingDifficulty = utils.roundTo(_this.pendingDifficulty * diffIndex, 4);
       _this.pendingDifficulty *= diffIndex;
 
       // Check Limits
@@ -226,29 +224,23 @@ const Client = function(config, socket, id, authorizeFn) {
       } else if (_this.maxDiff < _this.pendingDifficulty) {
         _this.pendingDifficulty = _this.maxDiff;
       }
-
       result = _this.broadcastDifficulty(_this.pendingDifficulty);
-      _this.pendingDifficulty = null;
     } else if (diffRatio != 1 && _this.difficulty > 0) {
-      console.log('yyy new block so apply diffIndex: ' + diffRatio + ' to ' + _this.difficulty)
-
+      
       // Apply CN Round Difficulty Ratio
-      // _this.pendingDifficulty = utils.roundTo(_this.pendingDifficulty * diffIndex, 4);
-      _this.pendingDifficulty = _this.difficulty * diffRatio; // added
+      _this.pendingDifficulty = _this.difficulty * diffRatio;
 
       // Check Limits
-      // added
       if (_this.minDiff > _this.pendingDifficulty) {
         _this.pendingDifficulty = _this.minDiff;
       } else if (_this.maxDiff < _this.pendingDifficulty) {
         _this.pendingDifficulty = _this.maxDiff;
       }
-
-      result = _this.broadcastDifficulty(_this.pendingDifficulty); // added
-      _this.pendingDifficulty = null; // added
+      result = _this.broadcastDifficulty(_this.pendingDifficulty);
     }
-
+    
     // Emit Difficulty Update
+    _this.pendingDifficulty = null;
     if (result != null) _this.emit('client.difficulty.updated', _this.difficulty);
 
     // Broadcast Mining Job to Client

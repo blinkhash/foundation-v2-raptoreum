@@ -10,7 +10,7 @@ const Difficulty = function(config) {
   this.clients = {};
 
   // Difficulty Variables
-  this.maxSize = 60 / _this.config.targetTime * 5;
+  this.maxSize = 60 / _this.config.targetTime * 150;
   this.maxBoundary = 1 + _this.config.variance;
   this.minBoundary = 1 - _this.config.variance;
 
@@ -80,14 +80,6 @@ const Difficulty = function(config) {
     // Difficulty Will Be Updated
     if (diffCorrection != null && (diffCorrection > _this.maxBoundary || diffCorrection < _this.minBoundary)) {
       let newDifficulty = client.difficulty * diffCorrection;
-
-      // // Check Limits
-      // if (_this.config.minimum > newDifficulty) {
-      //   newDifficulty = _this.config.minimum;
-      // } else if (_this.config.maximum < newDifficulty) {
-      //   newDifficulty = _this.config.maximum;
-      // }
-
       _this.emit('client.difficulty.new', client, newDifficulty);
     };
 
