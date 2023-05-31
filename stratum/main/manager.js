@@ -84,13 +84,14 @@ const Manager = function(config, configMain) {
     if (_this.config.rotations.enabled && tmpTemplate.rpcData.previousblockhash) {
       let currentHash = null;
       const newHash = tmpTemplate.rpcData.previousblockhash;
-      // diffIndex = _this.getCNIndex(newHash);
+      diffIndex = _this.getCNIndex(newHash);
 
       if (_this.currentJob) {
         const newHeight = tmpTemplate.rpcData.height || 0;
         const currentHeight = _this.currentJob.rpcData ? _this.currentJob.rpcData.height : 0;
 
         if (newHeight > currentHeight && _this.currentJob.rpcData) {
+          console.log('xxx new block');
           if (_this.currentJob.rpcData.previousblockhash)
             currentHash = _this.currentJob.rpcData.previousblockhash;
           // if (currentHash != null)

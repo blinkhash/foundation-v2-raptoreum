@@ -195,6 +195,7 @@ const Client = function(config, socket, id, authorizeFn) {
       params: [difficulty],
     });
 
+    console.log('xxx bDiff' + _this.id, difficulty)
     // Difficulty Updated Correctly
     return true;
   };
@@ -217,6 +218,7 @@ const Client = function(config, socket, id, authorizeFn) {
 
       // Apply CN Round Index
       // _this.pendingDifficulty = utils.roundTo(_this.pendingDifficulty * diffIndex, 4);
+      console.log('xxx broadcast mJob: ' + _this.id, _this.pendingDifficulty, diffIndex);
       _this.pendingDifficulty *= diffIndex;
 
       // Check Limits
