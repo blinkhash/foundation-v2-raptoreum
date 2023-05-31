@@ -222,14 +222,8 @@ const Client = function(config, socket, id, authorizeFn) {
 
       // Check Limits
       if (_this.minDiff > _this.pendingDifficulty) {
-        console.log('loo low')
-        console.log(_this.minDiff)
-        console.log(_this.pendingDifficulty)
         _this.pendingDifficulty = _this.minDiff;
       } else if (_this.maxDiff < _this.pendingDifficulty) {
-        console.log('loo high')
-        console.log(_this.minDiff)
-        console.log(_this.pendingDifficulty)
         _this.pendingDifficulty = _this.maxDiff;
       }
 
@@ -240,19 +234,13 @@ const Client = function(config, socket, id, authorizeFn) {
 
       // Apply CN Round Difficulty Ratio
       // _this.pendingDifficulty = utils.roundTo(_this.pendingDifficulty * diffIndex, 4);
-      _this.pendingDifficulty *= diffRatio; // added
+      _this.pendingDifficulty = _this.difficulty * diffRatio; // added
 
       // Check Limits
       // added
       if (_this.minDiff > _this.pendingDifficulty) {
-        console.log('loo low')
-        console.log(_this.minDiff)
-        console.log(_this.pendingDifficulty)
         _this.pendingDifficulty = _this.minDiff;
       } else if (_this.maxDiff < _this.pendingDifficulty) {
-        console.log('loo high')
-        console.log(_this.minDiff)
-        console.log(_this.pendingDifficulty)
         _this.pendingDifficulty = _this.maxDiff;
       }
 
