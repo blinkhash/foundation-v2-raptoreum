@@ -41,7 +41,7 @@ exports.loaderRecipientsText2 = () => 'The recipient percentage is greater than 
 exports.stratumBlocksText1 = () => 'The block was rejected by the network';
 exports.stratumBlocksText2 = (host, error) => `RPC error with primary daemon instance (${ host }) when submitting block: ${ error }`;
 exports.stratumBlocksText3 = (host) => `Primary daemon instance (${ host }) rejected a supposedly valid block`;
-exports.stratumBlocksText4 = (coin, height) => `Submitted a primary block (${ coin }:${ height }) successfully to ${ coin }'s daemon instance(s)`;
+exports.stratumBlocksText4 = (coin, height, miner) => `Submitted a primary block (${ coin }:${ height }) found by ${ miner }, successfully to ${ coin }'s daemon instance(s)`;
 exports.stratumBlocksText5 = (host, error) => `RPC error with auxiliary daemon instance (${ host }) when submitting block: ${ error }`;
 exports.stratumBlocksText6 = (host) => `Auxiliary daemon instance (${ host }) rejected a supposedly valid block`;
 exports.stratumBlocksText7 = (coin, height) => `Submitted an auxiliary block (${ coin }:${ height }) successfully to ${ coin }'s daemon instance(s)`;
@@ -76,7 +76,7 @@ exports.stratumZmqText2 = (error) => `Received an error when attempting to estab
 exports.stratumZmqText3 = (coin, height) => `Requested template from primary chain (${ coin }:${ height }) via ZMQ subscription`;
 exports.stratumZmqText4 = (coin, height) => `Requested template from auxiliary chain (${ coin }:${ height }) via ZMQ subscription`;
 exports.stratumRecipientsText1 = () => 'No recipients have been added, which means that no fees will be taken';
-exports.stratumSharesText1 = (difficulty, actual, address, ip) => `A share was accepted at difficulty ${ difficulty }/${ actual || 0 } by ${ address } [${ ip }]`;
+exports.stratumSharesText1 = (difficulty, actual, address, ip) => `A share was accepted at difficulty ${ difficulty }/${ actual } by ${ address } [${ ip }]`;
 exports.stratumSharesText2 = (error, address, ip) => `A share was rejected (${ error }) from ${ address } [${ ip }]`;
 exports.stratumSettingsText1 = (error) => `Could not start pool, error with RPC response: ${ error }`;
 exports.stratumSettingsText2 = (request, error) => `Could not start pool, error with RPC command response: ${ request } - ${ error }`;
@@ -86,3 +86,4 @@ exports.stratumTemplateText1 = (host, error) => `RPC error with primary daemon i
 exports.stratumTemplateText2 = (host, error) => `RPC error with auxiliary daemon instance (${ host }) when requesting an auxiliary template update: ${ error }`;
 exports.stratumWorkersText1 = (address, ip, port) => `Authorized worker: ${ address } (${ ip }:${ port })`;
 exports.stratumWorkersText2 = (address, ip, port) => `Unauthorized worker: ${ address } (${ ip }:${ port })`;
+exports.stratumWorkersText3 = (system) => `Subscribed worker with ${ system }`;

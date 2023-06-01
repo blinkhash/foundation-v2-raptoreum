@@ -12,6 +12,11 @@ const config = {};
 config.enabled = true;
 config.settings = {};
 
+// Alternative GR Hashing Library
+config.hashLib = {};
+config.hashLib.enabled = false;
+config.hashLib.name = '';
+
 // Banning Configuration
 config.settings.banning = {};
 config.settings.banning.banLength = 600000; // ms;
@@ -27,6 +32,30 @@ config.settings.timeout.rebroadcast = 60000; // ms
 // Interval Configuration
 config.settings.interval = {};
 config.settings.interval.blocks = 1000; // ms
+
+// CryptoNight Rotations
+config.rotations = {};
+config.rotations.enabled = true;
+config.rotations.DarkDarkliteFast = 0.1; // Rotation 1
+config.rotations.DarkDarkliteLite = 0.2; // Rotation 2
+config.rotations.DarkDarkliteTurtle = 0.3; // Rotation 3
+config.rotations.DarkDarkliteTurtlelite = 0.4; // Rotation 4
+config.rotations.DarkFastLite = 0.5; // Rotation 5
+config.rotations.DarkFastTurtle = 0.6; // Rotation 6
+config.rotations.DarkFastTurtlelite = 0.7; // Rotation 7
+config.rotations.DarkLiteTurtle = 0.8; // Rotation 8
+config.rotations.DarkLiteTurtlelite = 0.9; // Rotation 9
+config.rotations.DarkTurtleTurtlelite = 1; // Rotation 10
+config.rotations.DarkliteFastLite = 1.1; // Rotation 11
+config.rotations.DarkliteFastTurtle = 1.2; // Rotation 12
+config.rotations.DarkliteFastTurtlelite = 1.3; // Rotation 13
+config.rotations.DarkliteLiteTurtle = 1.4; // Rotation 14
+config.rotations.DarkliteLiteTurtlelite = 1.5; // Rotation 15
+config.rotations.DarkliteTurtleTurtlelite = 1.6; // Rotation 16
+config.rotations.FastLiteTurtle = 1.7; // Rotation 17
+config.rotations.FastLiteTurtlelite = 1.8; // Rotation 18
+config.rotations.FastTurtleTurtlelite = 1.9; // Rotation 19
+config.rotations.LiteTurtleTurtlelite = 2; // Rotation 20
 
 // Shared Configuration
 ////////////////////////////////////////////////////////////////////////////////

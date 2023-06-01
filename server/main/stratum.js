@@ -1,5 +1,6 @@
 const Pool = require('../../stratum/main/pool');
 const Text = require('../../locales/index');
+const utils = require('../../stratum/main/utils');
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -30,16 +31,17 @@ const Stratum = function (logger, config, configMain) {
 
     // Handle Stratum Share Events
     _this.stratum.on('pool.share', (shareData, shareValid) => {
+      const address = shareData.addrPrimary.split('.')[0] || 'anonymous';
 
       // Processed Share was Accepted
       if (shareValid) {
-        const address = shareData.addrPrimary.split('.')[0];
-        const text = _this.text.stratumSharesText1(shareData.difficulty, shareData.shareDiff, address, shareData.ip);
+        const targetDiff = utils.roundTo(shareData.difficulty, 4);
+        const actualDiff = utils.roundTo(shareData.shareDiff, 4) || 0;
+        const text = _this.text.stratumSharesText1(targetDiff, actualDiff, address, shareData.ip);
         _this.logger['log']('Pool', 'Checks', [text]);
 
       // Processed Share was Rejected
       } else {
-        const address = shareData.addrPrimary.split('.')[0];
         const text = _this.text.stratumSharesText2(shareData.error, address, shareData.ip);
         _this.logger['error']('Pool', 'Checks', [text]);
       }

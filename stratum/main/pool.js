@@ -224,7 +224,8 @@ const Pool = function(config, configMain, callback) {
     _this.submitPrimary(shareData.hex, (error, response) => {
       if (error) _this.emitLog('error', false, response);
       else {
-        _this.emitLog('special', false, _this.text.stratumBlocksText4(_this.config.primary.coin.name, shareData.height));
+        const miner = shareData.addrPrimary.split('.')[0] || 'anonymous miner';
+        _this.emitLog('special', false, _this.text.stratumBlocksText4(_this.config.primary.coin.name, shareData.height, miner));
         _this.checkAccepted(_this.primary.daemon, shareData.hash, (accepted, transaction) => {
           shareData.transaction = transaction;
           callback(accepted, shareData);
@@ -522,7 +523,7 @@ const Pool = function(config, configMain, callback) {
   };
 
   // Send Primary Payments to Miners
-  this.handlePrimaryPayments = function(payments, callback) {
+  this.handlePrimaryPayments = function(payments, users, callback) {
 
     // Calculate Total Payment to Each Miner
     const amounts = {};
@@ -530,12 +531,23 @@ const Pool = function(config, configMain, callback) {
       amounts[address] = utils.roundTo(payments[address], 8);
     });
 
-    // Validate Amounts >= Minimum
     const balances = {};
     Object.keys(amounts).forEach((address) => {
+
+      // Validate Amounts >= Minimum
       if (amounts[address] < _this.config.primary.payments.minPayment ||
         !_this.primary.payments.enabled) {
         balances[address] = amounts[address];
+        delete amounts[address];
+      }
+
+      // Validate Amounts >= Payout Limit
+      if (address in users && users[address] > amounts[address]) {
+        if (balances[address] > 0) {
+          balances[address] += amounts[address];
+        } else {
+          balances[address] = amounts[address];
+        }
         delete amounts[address];
       }
     });
@@ -898,7 +910,7 @@ const Pool = function(config, configMain, callback) {
   };
 
   // Send Auxiliary Payments to Miners
-  this.handleAuxiliaryPayments = function(payments, callback) {
+  this.handleAuxiliaryPayments = function(payments, users, callback) {
 
     // Calculate Total Payment to Each Miner
     const amounts = {};
@@ -906,12 +918,23 @@ const Pool = function(config, configMain, callback) {
       amounts[address] = utils.roundTo(payments[address], 8);
     });
 
-    // Validate Amounts >= Minimum
     const balances = {};
     Object.keys(amounts).forEach((address) => {
+
+      // Validate Amounts >= Minimum
       if (amounts[address] < _this.config.auxiliary.payments.minPayment ||
         !_this.auxiliary.payments.enabled) {
         balances[address] = amounts[address];
+        delete amounts[address];
+      }
+
+      // Validate Amounts >= Payout Limit
+      if (address in users && users[address] > amounts[address]) {
+        if (balances[address] > 0) {
+          balances[address] += amounts[address];
+        } else {
+          balances[address] = amounts[address];
+        }
         delete amounts[address];
       }
     });
@@ -1158,7 +1181,7 @@ const Pool = function(config, configMain, callback) {
     });
 
     // Handle New Block Templates
-    _this.manager.on('manager.block.new', (template) => {
+    _this.manager.on('manager.block.new', (template, diffIndex, diffRatio) => {
 
       // Process Primary Network Data
       _this.checkNetwork(_this.primary.daemon, 'primary', (networkData) => {
@@ -1173,14 +1196,14 @@ const Pool = function(config, configMain, callback) {
       }
 
       // Broadcast New Mining Jobs to Clients
-      if (_this.network) _this.network.broadcastMiningJobs(template, true);
+      if (_this.network) _this.network.broadcastMiningJobs(template, true, diffIndex, diffRatio);
     });
 
     // Handle Updated Block Templates
     _this.manager.on('manager.block.updated', (template) => {
 
       // Broadcast New Mining Jobs to Clients
-      if (_this.network) _this.network.broadcastMiningJobs(template, false);
+      if (_this.network) _this.network.broadcastMiningJobs(template, false, 1, 1);
     });
 
     // Indicate Manager is Setup Successfully
@@ -1318,7 +1341,6 @@ const Pool = function(config, configMain, callback) {
       _this.emitLog('log', false, _this.text.stratumClientText1(client.addrPrimary, diff));
     });
     client.on('client.difficulty.updated', (diff) => {
-      _this.difficulty[client.socket.localPort].clients[client.id] = [];
       _this.emitLog('log', false, _this.text.stratumClientText2(client.addrPrimary, diff));
     });
 
@@ -1356,20 +1378,40 @@ const Pool = function(config, configMain, callback) {
     });
 
     // Handle Client Subscription Events
-    client.on('client.subscription', (params, callback) => {
+    client.on('client.subscription', (message, callback) => {
+
+      // Log Miner Info
+      if (message.params && message.params.length > 0)
+        _this.emitLog('log', true, _this.text.stratumWorkersText3(message.params[0]));
+
       const extraNonce = _this.manager.extraNonceCounter.next();
       callback(null, extraNonce, _this.manager.extraNonce2Size);
+    });
 
-      // Send Correct Initial Difficulty to Miner
+    // Handle Client Authorization Events
+    client.on('client.authorization', (clientFlags) => {
+      const multiplier = utils.getUptimeMultiplier(0.9);
+      let difficulty = 0.2;
       const validPorts = _this.config.ports
         .filter((port) => port.port === client.socket.localPort)
         .filter((port) => typeof port.difficulty.initial !== 'undefined');
-      if (validPorts.length >= 1) client.broadcastDifficulty(validPorts[0].difficulty.initial);
-      else client.broadcastDifficulty(8);
+
+      if (clientFlags.difficulty) {
+
+        // Set Custom Initial Difficulty
+        difficulty = clientFlags.difficulty;
+      } else if (validPorts.length >= 1) {
+
+        // Get Correct Initial Port Difficulty
+        
+        difficulty = validPorts[0].difficulty.initial;
+      }
+      
+      client.broadcastDifficulty(difficulty * multiplier);
 
       // Send Mining Job Parameters to Miner
       const jobParams = _this.manager.currentJob.handleParameters(true);
-      client.broadcastMiningJob(jobParams);
+      client.broadcastMiningJob(jobParams, 1, 1);
     });
 
     // Handle Client Submission Events
@@ -1398,7 +1440,7 @@ const Pool = function(config, configMain, callback) {
       _this.statistics.ports = _this.config.ports
         .filter((port) => port.enabled)
         .flatMap((port) => port.port);
-      _this.network.broadcastMiningJobs(_this.manager.currentJob, true);
+      _this.network.broadcastMiningJobs(_this.manager.currentJob, true, 1, 1);
       _this.emitLog('debug', true, _this.text.checksMessageText11(), true);
       callback();
     });

@@ -248,6 +248,39 @@ exports.getBitcoinOPCodes = function(type) {
   }
 };
 
+// Identify CryptoNight Algorithm Rotation from Block Header
+exports.getCryptoNightRotation = function(hash) {
+  const rotation = [];
+
+  for (let i = hash.length - 1; i >= 0; i--) {
+    if (rotation.length === 3) {
+      break;
+    } else {
+      const nibble = parseInt(hash[i], 16);
+      const algorithm = nibble % 6;
+      if (!rotation.includes(algorithm)) {
+        rotation.push(algorithm);
+      };
+    };
+  };
+  return rotation;
+};
+
+// Assing Difficulty Index to CryptoNight Rotation
+exports.getDifficultyIndex = function (rotation, cnRotations) {
+  rotation.sort((a, b) => a - b);
+  const cnAlgorithms = [
+    'Dark',
+    'Darklite',
+    'Fast',
+    'Lite',
+    'Turtle',
+    'Turtlelite'
+  ];
+  const rotationName = cnAlgorithms[rotation[0]] + cnAlgorithms[rotation[1]] + cnAlgorithms[rotation[2]];
+  return cnRotations[rotationName];
+};
+
 // Calculate Encoding Length
 exports.getEncodingLength = function(data) {
   return data < exports.getBitcoinOPCodes('OP_PUSHDATA1') ? 1
@@ -300,6 +333,27 @@ exports.getSolutionSlice = function(nParam, kParam) {
   case '200_9':
     return 6;
   }
+};
+
+// Get Parameter Multiplier After Server Start
+exports.getUptimeMultiplier = function(strength = 1) {
+  const uptime = process.uptime();
+  const limit1 = 60;
+  const limit2 = 120
+  const limit3 = 180
+  const limit4 = 240
+
+  let multiplier = 1;
+  if (uptime <= limit1)
+    multiplier = 1 + 2 * strength;
+  else if (uptime > limit1 && uptime <= limit2)
+    multiplier = 1 + 1.5 * strength;
+  else if (uptime > limit2 && uptime <= limit3)
+    multiplier = 1 + 1 * strength;
+  else if (uptime > limit3 && uptime <= limit4)
+    multiplier = 1 + 0.5 * strength;
+  
+  return multiplier;
 };
 
 // Check if Input is Hex String

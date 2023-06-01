@@ -17,6 +17,7 @@ const extraNonce = Buffer.from('f000000ff111111f', 'hex');
 function mockSocket() {
   const socket = new events.EventEmitter();
   socket.remoteAddress = '127.0.0.1',
+  socket.localPort = 3002,
   socket.destroy = () => {};
   socket.setEncoding = () => {};
   socket.setKeepAlive = () => {};
@@ -96,7 +97,7 @@ describe('Test network functionality', () => {
       expect(timeout).toBe('The last submitted share was 0 seconds ago');
       network.stopNetwork();
     });
-    network.broadcastMiningJobs(template, true);
+    network.broadcastMiningJobs(template, true, 1, 1);
   });
 
   test('Test network client behavior [1]', (done) => {

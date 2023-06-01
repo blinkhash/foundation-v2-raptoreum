@@ -2,6 +2,9 @@ const Algorithms = require('./algorithms');
 const Template = require('./template');
 const events = require('events');
 const fastRoot = require('merkle-lib/fastRoot');
+const ffi = require('ffi-napi');
+const path = require('path');
+const ref = require('ref-napi');
 const utils = require('./utils');
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -23,6 +26,20 @@ const Manager = function(config, configMain) {
   this.extraNoncePlaceholder = Buffer.from('f000000ff111111f', 'hex');
   this.extraNonce2Size = _this.extraNoncePlaceholder.length - _this.extraNonceCounter.size;
 
+  // Get CryptoNight Rotation Index
+  this.getCNIndex = function(hash) {
+    if (hash.length != 64) return 1;
+    const rotation = utils.getCryptoNightRotation(hash);
+    const diffIndex = utils.getDifficultyIndex(rotation, _this.config.rotations);
+    return !isNaN(diffIndex) ? diffIndex : 1;
+  };
+
+  // Calculate CryptoNight Rotation Index Ratio
+  this.handleCNRotation = function(currentHash, newHash) {
+    if (currentHash.length != 64 || newHash.length != 64) return 1;
+    return Math.round(100 * _this.getCNIndex(newHash) / _this.getCNIndex(currentHash)) / 100 || 1;
+  };
+
   // Check if New Block is Processed
   this.handleUpdates = function(rpcData) {
 
@@ -42,6 +59,8 @@ const Manager = function(config, configMain) {
 
   // Check if New Block is Processed
   this.handleTemplate = function(rpcData, newBlock, newBroadcast) {
+    let diffIndex = 1;
+    let diffRatio = 1;
 
     // If Current Job !== Previous Job
     let isNewBlock = _this.currentJob === null;
@@ -54,15 +73,37 @@ const Manager = function(config, configMain) {
     // Build New Block Template
     if (!isNewBlock && !newBlock) return false;
     if (newBroadcast) _this.validJobs = {};
+
     const tmpTemplate = new Template(
       _this.jobCounter.next(),
       _this.config,
       Object.assign({}, rpcData),
       _this.extraNoncePlaceholder);
 
+    // Apply CryptoNight Rotations
+    if (_this.config.rotations.enabled && tmpTemplate.rpcData.previousblockhash) {
+      let currentHash = null;
+      const newHash = tmpTemplate.rpcData.previousblockhash;
+      diffIndex = _this.getCNIndex(newHash);
+
+      if (_this.currentJob) {
+        const newHeight = tmpTemplate.rpcData.height || 0;
+        const currentHeight = _this.currentJob.rpcData ? _this.currentJob.rpcData.height : 0;
+
+        if (newHeight > currentHeight && _this.currentJob.rpcData) {
+          if (_this.currentJob.rpcData.previousblockhash)
+            currentHash = _this.currentJob.rpcData.previousblockhash;
+          if (currentHash != null) {
+            diffRatio = _this.handleCNRotation(currentHash, newHash);
+          }
+        }
+      }
+    }
+
     // Update Current Template
     _this.currentJob = tmpTemplate;
-    _this.emit('manager.block.new', tmpTemplate);
+
+    _this.emit('manager.block.new', tmpTemplate, diffIndex, diffRatio);
     _this.validJobs[tmpTemplate.jobId] = tmpTemplate;
     return true;
   };
@@ -77,9 +118,24 @@ const Manager = function(config, configMain) {
     const nTimeInt = parseInt(submission.nTime, 16);
 
     // Establish Hashing Algorithms
-    const headerDigest = Algorithms.ghostrider.hash();
+    let headerDigest = Algorithms.ghostrider.hash();
     const coinbaseDigest = Algorithms.sha256d.hash();
     const blockDigest = Algorithms.sha256d.hash();
+
+    // Check for Alternative Hashing Library
+    /* istanbul ignore next */
+    if (config.hashLib.enabled) {
+      const libgr = path.join(__dirname, '../../lib/', config.hashLib.name);
+      const ffiLib = ffi.Library(libgr, {
+        gr_hash_1way: [ref.types.void, [ ref.refType(ref.types.void), ref.refType(ref.types.void)]],
+      });
+
+      headerDigest = function(input) {
+        const output = Buffer.alloc(32);
+        ffiLib.gr_hash_1way(output, input);
+        return output;
+      };
+    };
 
     // Share is Invalid
     const shareError = function(error) {

@@ -49,12 +49,14 @@
     "blake2b": "^2.1.4",
     "bs58check": "^2.1.2",
     "colors": "^1.4.0",
+    "ffi-napi": "^4.0.3",
     "libsodium": "^0.7.3",
     "merkle-lib": "^2.0.10",
     "nan": "^2.15.0",
     "node-gyp": "^9.0.0",
     "nodemon": "^2.0.19",
     "pm2": "^5.2.0",
+    "ref-napi": "^3.0.3",
     "sha3": "2.1.4",
     "uuid": "^8.3.2",
     "zeromq": "^5.2.8"
@@ -63,6 +65,7 @@
     "codecov": "^3.8.1",
     "eslint": "^7.23.0",
     "jest": "^26.6.3",
+    "jest-mock-process": "^2.0.0",
     "mockdate": "^3.0.5",
     "nock": "^13.2.4"
   },
