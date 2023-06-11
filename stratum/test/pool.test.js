@@ -2481,7 +2481,7 @@ describe('Test pool functionality', () => {
       work: 29.489361720000005
     };
     const expected = { 'RHP3VKiSYH4putQeSKLwr47QDdERa6H6G1': { 'immature': 10000, 'generate': 0 }};
-    pool.handlePrimaryWorkers([blocks1], [[worker1]], false, (results) => {
+    pool.handlePrimaryWorkers([blocks1], [[worker1]], false, (results, rewards) => {
       expect(results).toStrictEqual(expected);
     });
   });

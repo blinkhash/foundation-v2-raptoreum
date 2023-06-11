@@ -430,9 +430,11 @@ const Pool = function(config, configMain, callback) {
 
     // Determine Block Handling Procedures
     const updates = {};
+    const rewards = {};
     blocks.forEach((block, idx) => {
       const current = workers[idx] || [];
       if (block.type !== 'primary') return;
+      rewards[block.round] = {};
 
       // Establish Separate Behavior
       let orphan, immature, generate;
@@ -442,10 +444,20 @@ const Pool = function(config, configMain, callback) {
       case 'orphan':
         orphan = _this.handleValidation(block, current, sending);
         Object.keys(orphan).forEach((address) => {
+
+          // Updates
           if (address in updates) updates[address][block.previous] += orphan[address];
           else {
             updates[address] = { immature: 0, generate: 0 };
             updates[address][block.previous] += orphan[address];
+          }
+
+          // Rewards
+          if (address in rewards[block.round])
+            rewards[block.round][address][block.previous] += orphan[address];
+          else {
+            rewards[block.round][address] = { immature: 0, generate: 0 };
+            rewards[block.round][address][block.previous] += orphan[address];
           }
         });
         break;
@@ -454,8 +466,15 @@ const Pool = function(config, configMain, callback) {
       case 'immature':
         immature = _this.handleValidation(block, current, sending);
         Object.keys(immature).forEach((address) => {
+
+          // Updates
           if (address in updates) updates[address].immature += immature[address];
           else updates[address] = { immature: immature[address], generate: 0 };
+
+          // Rewards
+          if (address in rewards[block.round])
+            rewards[block.round][address].immature += immature[address];
+          else rewards[block.round][address] = { immature: immature[address], generate: 0 };
         });
         break;
 
@@ -463,9 +482,18 @@ const Pool = function(config, configMain, callback) {
       case 'generate':
         generate = _this.handleValidation(block, current, sending);
         Object.keys(generate).forEach((address) => {
+
+          // Updates
           if (address in updates) updates[address].generate += generate[address];
           else updates[address] = { immature: 0, generate: generate[address] };
           if (block.previous === 'immature') updates[address].immature -= generate[address];
+
+          // Rewards
+          if (address in rewards[block.round])
+            rewards[block.round][address].generate += generate[address];
+          else rewards[block.round][address] = { immature: 0, generate: generate[address] };
+          if (block.previous === 'immature')
+            rewards[block.round][address].immature -= generate[address];
         });
         break;
 
@@ -476,7 +504,7 @@ const Pool = function(config, configMain, callback) {
     });
 
     // Return Updated Worker Data
-    callback(updates);
+    callback(updates, rewards);
   };
 
   // Validate Primary Balance and Checks
@@ -817,9 +845,11 @@ const Pool = function(config, configMain, callback) {
 
     // Determine Block Handling Procedures
     const updates = {};
+    const rewards = {};
     blocks.forEach((block, idx) => {
       const current = workers[idx] || [];
       if (block.type !== 'auxiliary') return;
+      rewards[block.round] = {};
 
       // Establish Separate Behavior
       let orphan, immature, generate;
@@ -829,10 +859,20 @@ const Pool = function(config, configMain, callback) {
       case 'orphan':
         orphan = _this.handleValidation(block, current, sending);
         Object.keys(orphan).forEach((address) => {
+
+          // Updates
           if (address in updates) updates[address][block.previous] += orphan[address];
           else {
             updates[address] = { immature: 0, generate: 0 };
             updates[address][block.previous] += orphan[address];
+          }
+
+          // Rewards
+          if (address in rewards[block.round])
+            rewards[block.round][address][block.previous] += orphan[address];
+          else {
+            rewards[block.round][address] = { immature: 0, generate: 0 };
+            rewards[block.round][address][block.previous] += orphan[address];
           }
         });
         break;
@@ -841,8 +881,15 @@ const Pool = function(config, configMain, callback) {
       case 'immature':
         immature = _this.handleValidation(block, current, sending);
         Object.keys(immature).forEach((address) => {
+
+          // Updates
           if (address in updates) updates[address].immature += immature[address];
           else updates[address] = { immature: immature[address], generate: 0 };
+
+          // Rewards
+          if (address in rewards[block.round])
+            rewards[block.round][address].immature += immature[address];
+          else rewards[block.round][address] = { immature: immature[address], generate: 0 };
         });
         break;
 
@@ -850,9 +897,18 @@ const Pool = function(config, configMain, callback) {
       case 'generate':
         generate = _this.handleValidation(block, current, sending);
         Object.keys(generate).forEach((address) => {
+          
+          // Updates
           if (address in updates) updates[address].generate += generate[address];
           else updates[address] = { immature: 0, generate: generate[address] };
           if (block.previous === 'immature') updates[address].immature -= generate[address];
+
+          // Rewards
+          if (address in rewards[block.round])
+            rewards[block.round][address].generate += generate[address];
+          else rewards[block.round][address] = { immature: 0, generate: generate[address] };
+          if (block.previous === 'immature')
+            rewards[block.round][address].immature -= generate[address];
         });
         break;
 
@@ -863,7 +919,7 @@ const Pool = function(config, configMain, callback) {
     });
 
     // Return Updated Worker Data
-    callback(updates);
+    callback(updates, rewards);
   };
 
   // Validate Auxiliary Balance and Checks
