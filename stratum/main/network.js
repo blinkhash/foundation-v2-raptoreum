@@ -75,7 +75,6 @@ const Network = function(config, configMain, authorizeFn) {
       _this.emit('client.banned', client);
     });
     client.on('client.socket.disconnect', () => {
-      delete _this.clients[subscriptionId];
       _this.emit('client.disconnected', client);
     });
 
