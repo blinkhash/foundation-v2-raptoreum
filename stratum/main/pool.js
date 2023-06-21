@@ -1402,23 +1402,18 @@ const Pool = function(config, configMain, callback) {
 
     // Handle Client Socket Events
     client.on('client.socket.malformed', (message) => {
-      delete _this.clients[client.id];
       _this.emitLog('warning', false, _this.text.stratumClientText3(client.sendLabel(), message));
     });
     client.on('client.socket.flooded', () => {
-      delete _this.clients[client.id];
       _this.emitLog('warning', false, _this.text.stratumClientText4(client.sendLabel()));
     });
     client.on('client.socket.error', (error) => {
-      delete _this.clients[client.id];
       _this.emitLog('warning', false, _this.text.stratumClientText5(client.sendLabel(), JSON.stringify(error)));
     });
     client.on('client.socket.timeout', (error) => {
-      delete _this.clients[client.id];
       _this.emitLog('warning', false, _this.text.stratumClientText6(client.sendLabel(), JSON.stringify(error)));
     });
     client.on('client.socket.disconnect', () => {
-      delete _this.clients[client.id];
       _this.emitLog('warning', false, _this.text.stratumClientText7(client.sendLabel()));
     });
 
