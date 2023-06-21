@@ -118,20 +118,24 @@ const Manager = function(config, configMain) {
     const job = _this.validJobs[jobId];
     const nTimeInt = parseInt(submission.nTime, 16);
 
-    // Setup SHA256d Hashing Algorithm
-    const sha256dHash = function(buffer) {
-      return Buffer.from(sha256d().update(buffer).digest('base32'));
-    }
- 
-    // Setup Ghostrider Hashing Algorithm
-    const libgr = path.join(__dirname, '../../lib/', config.hashLib.name);
-    const ffiLib = ffi.Library(libgr, {
-      gr_hash_1way: [ref.types.void, [ ref.refType(ref.types.void), ref.refType(ref.types.void)]],
-    });
-    const grHash = function(input) {
-      const output = Buffer.alloc(32);
-      ffiLib.gr_hash_1way(output, input);
-      return output;
+    // Establish Hashing Algorithms
+    let headerDigest = Algorithms.ghostrider.hash();
+    const coinbaseDigest = Algorithms.sha256d.hash();
+    const blockDigest = Algorithms.sha256d.hash();
+
+    // Check for Alternative Hashing Library
+    /* istanbul ignore next */
+    if (config.hashLib.enabled) {
+      const libgr = path.join(__dirname, '../../lib/', config.hashLib.name);
+      const ffiLib = ffi.Library(libgr, {
+        gr_hash_1way: [ref.types.void, [ ref.refType(ref.types.void), ref.refType(ref.types.void)]],
+      });
+
+      headerDigest = function(input) {
+        const output = Buffer.alloc(32);
+        ffiLib.gr_hash_1way(output, input);
+        return output;
+      };
     };
     
     // Share is Invalid
@@ -183,21 +187,21 @@ const Manager = function(config, configMain) {
 
     // Generate Coinbase Buffer
     const coinbaseBuffer = job.handleCoinbase(extraNonce1Buffer, extraNonce2Buffer);
-    const coinbaseHash = sha256dHash(coinbaseBuffer);
+    const coinbaseHash = coinbaseDigest(coinbaseBuffer);
     const hashes = utils.convertHashToBuffer(job.rpcData.transactions);
     const transactions = [coinbaseHash].concat(hashes);
     const merkleRoot = fastRoot(transactions, utils.sha256d);
 
     // Start Generating Block Hash
     const headerBuffer = job.handleHeader(version, merkleRoot, submission.nTime, submission.nonce);
-    const headerHash = grHash(headerBuffer, nTimeInt);
+    const headerHash = headerDigest(headerBuffer, nTimeInt);
     const headerBigInt = utils.bufferToBigInt(utils.reverseBuffer(headerHash));
 
     // Calculate Share Difficulty
     const shareMultiplier = Algorithms.ghostrider.multiplier;
     const shareDiff = Algorithms.ghostrider.diff / Number(headerBigInt) * shareMultiplier;
     const blockDiffAdjusted = job.difficulty * Algorithms.ghostrider.multiplier;
-    const blockHash = utils.reverseBuffer(sha256dHash(headerBuffer)).toString('hex');
+    const blockHash = utils.reverseBuffer(blockDigest(headerBuffer, submission.nTime)).toString('hex');
     const blockHex = job.handleBlocks(headerBuffer, coinbaseBuffer).toString('hex');
 
     // Check if Share is Valid Block Candidate

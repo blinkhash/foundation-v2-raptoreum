@@ -76,18 +76,6 @@ const Network = function(config, configMain, authorizeFn) {
       _this.bannedIPs[client.socket.remoteAddress] = Date.now();
       _this.emit('client.banned', client);
     });
-    client.on('client.socket.malformed', () => {
-      delete _this.clients[subscriptionId];
-    });
-    client.on('client.socket.flooded', () => {
-      delete _this.clients[subscriptionId];
-    });
-    client.on('client.socket.error', () => {
-      delete _this.clients[subscriptionId];
-    });
-    client.on('client.socket.timeout', () => {
-      delete _this.clients[subscriptionId];
-    });
     client.on('client.socket.disconnect', () => {
       delete _this.clients[subscriptionId];
       _this.emit('client.disconnected', client);

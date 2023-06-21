@@ -1414,7 +1414,9 @@ const Pool = function(config, configMain, callback) {
       _this.emitLog('warning', false, _this.text.stratumClientText6(client.sendLabel(), JSON.stringify(error)));
     });
     client.on('client.socket.disconnect', () => {
-      delete _this.difficulty[client.socket.localPort].clients[client.id];
+      if (typeof(_this.difficulty[client.socket.localPort]) !== 'undefined') {
+        delete _this.difficulty[client.socket.localPort].clients[client.id];
+      }
       _this.emitLog('warning', false, _this.text.stratumClientText7(client.sendLabel()));
     });
 

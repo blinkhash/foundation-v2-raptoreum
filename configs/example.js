@@ -12,8 +12,9 @@ const config = {};
 config.enabled = true;
 config.settings = {};
 
-// GR Hashing Library
+// Alternative GR Hashing Library
 config.hashLib = {};
+config.hashLib.enabled = false;
 config.hashLib.name = '';
 
 // Banning Configuration
