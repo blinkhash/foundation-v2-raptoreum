@@ -61,7 +61,7 @@ const Difficulty = function(config) {
   // Handle Difficulty Updates
   this.handleDifficulty = function(client) {
 
-    console.log('fork ' + process.env.forkId + ' this.client size: ' + Object.keys(_this.clients).length);
+    console.log('fork ' + process.env.forkId + ' difficulty.client size: ' + Object.keys(_this.clients).length);
 
     // Update Current Time/Values
     const curTime = (Date.now() / 1000) | 0;
