@@ -10,7 +10,7 @@ const Difficulty = function(config) {
   this.clients = {};
 
   // Difficulty Variables
-  this.maxSize = 60 / _this.config.targetTime * 150;
+  this.maxSize = 60 / _this.config.targetTime * 360;
   this.maxBoundary = 1 + _this.config.variance;
   this.minBoundary = 1 - _this.config.variance;
 
@@ -60,8 +60,6 @@ const Difficulty = function(config) {
 
   // Handle Difficulty Updates
   this.handleDifficulty = function(client) {
-
-    // console.log('fork ' + process.env.forkId + ' difficulty.client size: ' + Object.keys(_this.clients).length);
 
     // Update Current Time/Values
     const curTime = (Date.now() / 1000) | 0;

@@ -61,8 +61,6 @@ const Network = function(config, configMain, authorizeFn) {
   // Manage New Client Connections
   this.handleClient = function (socket) {
 
-    // console.log('fork ' + process.env.forkId + ' network.client size: ' + Object.keys(_this.clients).length);
-
     // Establish New Stratum Client
     socket.setKeepAlive(true);
     const subscriptionId = uuid.v4();

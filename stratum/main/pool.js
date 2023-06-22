@@ -1414,9 +1414,20 @@ const Pool = function(config, configMain, callback) {
       _this.emitLog('warning', false, _this.text.stratumClientText6(client.sendLabel(), JSON.stringify(error)));
     });
     client.on('client.socket.disconnect', () => {
-      // if (typeof(_this.difficulty[client.socket.localPort]) !== 'undefined') {
-      //   delete _this.difficulty[client.socket.localPort].clients[client.id];
-      // }
+
+      // Disconnected Worker Port
+      const validPorts = _this.config.ports
+        .filter((port) => typeof port.difficulty.initial !== 'undefined')
+        .map((port) => port.port);
+      const port = Number(client.socket.server._connectionKey.split(':')[2]);
+
+      // Delete Client Difficulty Object
+      if (validPorts.includes(port) && typeof(_this.difficulty[port]) !== 'undefined') {
+        delete _this.difficulty[port].clients[client.id];
+      } else {
+        console.log(`there's an issue with port detection: ` + client.socket.server._connectionKey);
+      }
+
       _this.emitLog('warning', false, _this.text.stratumClientText7(client.sendLabel()));
     });
 
