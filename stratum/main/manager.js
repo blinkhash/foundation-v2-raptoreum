@@ -1,5 +1,4 @@
 const Algorithms = require('./algorithms');
-const sha256d = require('sha256d');
 const Template = require('./template');
 const events = require('events');
 const fastRoot = require('merkle-lib/fastRoot');
@@ -74,7 +73,6 @@ const Manager = function(config, configMain) {
     // Build New Block Template
     if (!isNewBlock && !newBlock) return false;
     if (newBroadcast) _this.validJobs = {};
-
     const tmpTemplate = new Template(
       _this.jobCounter.next(),
       _this.config,
@@ -103,7 +101,6 @@ const Manager = function(config, configMain) {
 
     // Update Current Template
     _this.currentJob = tmpTemplate;
-
     _this.emit('manager.block.new', tmpTemplate, diffIndex, diffRatio);
     _this.validJobs[tmpTemplate.jobId] = tmpTemplate;
     return true;

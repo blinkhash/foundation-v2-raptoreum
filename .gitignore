@@ -7,7 +7,6 @@ verthash.dat
 lib/*
 !lib/README.md
 configs/*
-!configs/main.js
 !configs/example.js
 certificates/*
 !certificates/README.md

@@ -93,7 +93,7 @@ const Client = function(config, socket, id, authorizeFn) {
     case 'mining.subscribe':
       _this.handleSubscribe(message);
       break;
-      case 'mining.authorize':
+    case 'mining.authorize':
       _this.handleAuthorize(message);
       break;
     case 'mining.configure':
